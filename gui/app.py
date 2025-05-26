@@ -7,7 +7,7 @@ st.title("Traffic Flow Prediction System (No TensorFlow)")
 
 model = joblib.load("mlp_model.pkl")
 scaler = joblib.load("scaler.pkl")
-df = load_traffic_data("data/traffic_boroondara.csv")
+df = load_traffic_data("data/Scats Data October 2006.csv")
 df, _ = scale_data(df)
 
 recent_data = df['volume'].values[-4:]
