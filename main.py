@@ -1,23 +1,46 @@
-from utils.dataloader import load_traffic_data, scale_data, create_sequences
-from model.mlpmodel import train_mlp, evaluate_model
-from sklearn.model_selection import train_test_split
-import joblib
+import tkinter as tk
+import os
+import sys
 
-# Load and prepare data
-df = load_traffic_data("data/traffic_boroondara.csv")
-df, scaler = scale_data(df)
-X, y = create_sequences(df['volume'].values)
+# Add the parent directory of 'main.py' to the Python path
+# This allows importing modules from 'utils' and 'models' directories
+script_dir = os.path.dirname(__file__)
+sys.path.append(script_dir)
 
-# Train/test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Now you can import from your subdirectories
+# from utils.dataloader import TrafficDataLoader
+# from models.saemodel import StackedAutoencoder
+from gui.app import TFPSApp # Import the GUI application
 
-# Train model
-model = train_mlp(X_train, y_train)
+def main():
+    """
+    The main function to run the Traffic Flow Prediction System.
+    It initializes and starts the GUI application.
+    """
+    print("Starting Traffic Flow Prediction System...")
 
-# Evaluate
-mse = evaluate_model(model, X_test, y_test)
-print("Model MSE:", mse)
+    # Create the main Tkinter window
+    root = tk.Tk()
 
-# Save model and scaler
-joblib.dump(model, "mlp_model.pkl")
-joblib.dump(scaler, "scaler.pkl")
+    # Initialize and run the GUI application
+    app = TFPSApp(root)
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
+    print("Traffic Flow Prediction System exited.")
+
+if __name__ == "__main__":
+    # Ensure the directory structure is set up for imports
+    # Create dummy directories if they don't exist for local testing
+    if not os.path.exists('utils'):
+        os.makedirs('utils')
+    if not os.path.exists('models'):
+        os.makedirs('models')
+    if not os.path.exists('gui'):
+        os.makedirs('gui')
+
+    # You might want to place your 'Scats Data October 2006.csv'
+    # in the root directory where main.py is, or adjust the path in dataloader.py
+
+    main()
