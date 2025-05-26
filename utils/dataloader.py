@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+import os # Import os module to handle file paths
 
 class TrafficDataLoader:
     """
@@ -15,7 +16,8 @@ class TrafficDataLoader:
         Args:
             csv_file_path (str): The path to the 'Scats Data October 2006.csv' file.
         """
-        self.csv_file_path = csv_file_path
+        # Adjust the path to look inside the 'data' directory
+        self.csv_file_path = os.path.join('data', csv_file_path)
         self.df_raw = None
         self.df_processed = None
         self.df_final = None
@@ -155,7 +157,7 @@ class TrafficDataLoader:
         print("\nDataFrame head after feature engineering:")
         print(self.df_final.head())
         print("\nDataFrame info after feature engineering:")
-        self.df_final.info()
+        print(self.df_final.info())
         print("\nMissing values after feature engineering:")
         print(self.df_final.isnull().sum())
 
@@ -241,7 +243,7 @@ class TrafficDataLoader:
 
 # Example usage (for testing this module directly)
 if __name__ == "__main__":
-    # Assuming 'Scats Data October 2006.csv' is in the same directory
+    # Assuming 'Scats Data October 2006.csv' is in a 'data' directory relative to this script
     data_loader = TrafficDataLoader('Scats Data October 2006.csv')
 
     # Load and clean data

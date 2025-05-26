@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
