@@ -2,13 +2,11 @@ import tkinter as tk
 import os
 import sys
 
-# Add the parent directory of 'main.py' to the Python path
 # This allows importing modules from 'utils' and 'model' directories
 script_dir = os.path.dirname(__file__)
 sys.path.append(script_dir)
 
-# Now you can import from your subdirectories
-# from utils.dataloader import TrafficDataLoader
+
 # from from model.saemodel import StackedAutoencoder # This import will now look in 'model'
 from gui.app import TFPSApp # Import the GUI application
 
