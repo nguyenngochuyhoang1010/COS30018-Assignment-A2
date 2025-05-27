@@ -3,13 +3,13 @@ import os
 import sys
 
 # Add the parent directory of 'main.py' to the Python path
-# This allows importing modules from 'utils' and 'models' directories
+# This allows importing modules from 'utils' and 'model' directories
 script_dir = os.path.dirname(__file__)
 sys.path.append(script_dir)
 
 # Now you can import from your subdirectories
 # from utils.dataloader import TrafficDataLoader
-# from models.saemodel import StackedAutoencoder
+# from from model.saemodel import StackedAutoencoder # This import will now look in 'model'
 from gui.app import TFPSApp # Import the GUI application
 
 def main():
@@ -33,10 +33,12 @@ def main():
 if __name__ == "__main__":
     # Ensure the directory structure is set up for imports
     # Create dummy directories if they don't exist for local testing
+    if not os.path.exists('data'): # Ensure 'data' directory exists
+        os.makedirs('data')
     if not os.path.exists('utils'):
         os.makedirs('utils')
-    if not os.path.exists('models'):
-        os.makedirs('models')
+    if not os.path.exists('model'): # Changed from 'models' to 'model'
+        os.makedirs('model')
     if not os.path.exists('gui'):
         os.makedirs('gui')
 
