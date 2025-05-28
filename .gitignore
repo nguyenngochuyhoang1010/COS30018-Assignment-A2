@@ -17,7 +17,6 @@ env/
 .env/
 venvs/
 .Python/
-<<<<<<< HEAD
 # This line is crucial for your specific setup:
 venv_tf/
 
@@ -25,55 +24,18 @@ venv_tf/
 ##################
 .vscode/   # VS Code settings
 .idea/     # PyCharm settings
-=======
-# Specific to your project:
-venv_tf/ # Your specific virtual environment folder
-
-# IDEs and Editors
-##################
-.vscode/ # VS Code settings
-.idea/   # PyCharm settings
->>>>>>> 45d6806bf1410992110b6273e4fe4619770a61b1
 *.sublime-project
 *.sublime-workspace
 
 # Operating System Files
 ########################
-<<<<<<< HEAD
 .DS_Store   # macOS
 Thumbs.db   # Windows
 ehthumbs.db # Windows
 .localized  # macOS
-=======
-.DS_Store # macOS
-Thumbs.db # Windows
-ehthumbs.db # Windows
-.localized # macOS
->>>>>>> 45d6806bf1410992110b6273e4fe4619770a61b1
 
 # Build/Distribution
 ####################
 dist/
 build/
 *.egg
-
-<<<<<<< HEAD
-# Data files (optional - keep commented out if you want to track your CSVs)
-=======
-# Data files (optional - uncomment if you DON'T want to track your data)
->>>>>>> 45d6806bf1410992110b6273e4fe4619770a61b1
-#########################################################################
-# data/
-# *.csv
-# *.xlsx
-# If you decide to ignore your entire 'data/' folder, then you would need to
-# make sure others can get the data by other means (e.g., download it,
-# or create a script to generate/fetch it).
-<<<<<<< HEAD
-# For now, it's generally recommended to keep data files tracked if they are
-# small and essential for the project to run out-of-the-box.
-=======
-# For now, if your `Scats Data October 2006.csv` is small and essential for
-# the repo to function, keep 'data/' commented out.
-# data/*.csv
->>>>>>> 45d6806bf1410992110b6273e4fe4619770a61b1
