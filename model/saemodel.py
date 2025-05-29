@@ -43,7 +43,7 @@ class StackedAutoencoder:
         print("Building Stacked Autoencoders (greedy layer-wise training)...")
 
         for i, encoding_dim in enumerate(self.encoding_dims):
-            print(f"  Building Autoencoder Layer {i+1} with encoding dim: {encoding_dim}")
+            print(f"   Building Autoencoder Layer {i+1} with encoding dim: {encoding_dim}")
 
             # Encoder part
             encoder_layer = Dense(encoding_dim, activation='relu', name=f'encoder_h{i+1}')
@@ -65,14 +65,13 @@ class StackedAutoencoder:
 
         # After building all individual autoencoders, create the full encoder model
         # The encoder model takes the original input and outputs the final encoded representation
-        encoder_layers = []
         x = Input(shape=(self.input_dim,))
         current_output = x
         for i, encoding_dim in enumerate(self.encoding_dims):
             # Extract the encoder layer from the trained autoencoder
+            # Ensure the weights are transferred correctly (they are by get_layer)
             encoder_layer = self.autoencoders[i].get_layer(f'encoder_h{i+1}')
             current_output = encoder_layer(current_output)
-            encoder_layers.append(encoder_layer) # Keep track of encoder layers
 
         self.encoder_model = Model(inputs=x, outputs=current_output, name='stacked_encoder')
         print("\nStacked Encoder Model Summary:")
@@ -88,17 +87,16 @@ class StackedAutoencoder:
             return
 
         print("\nBuilding Full Model (SAE + Regression Layer)...")
-        # The input to the full model is the original input dimension
         full_model_input = Input(shape=(self.input_dim,))
 
-        # Pass the input through the pre-trained encoder layers.
-        # We need to ensure the weights are transferred correctly.
-        x = full_model_input
-        for layer in self.encoder_model.layers[1:]: # Skip the Input layer
-            x = layer(x)
+        # --- FIX STARTS HERE ---
+        # Pass the input through the entire pre-trained encoder model directly.
+        # This treats self.encoder_model as a single, callable block.
+        encoded_output = self.encoder_model(full_model_input)
+        # --- FIX ENDS HERE ---
 
         # Add a regression output layer
-        regression_output = Dense(self.regression_output_dim, activation='linear', name='regression_output')(x)
+        regression_output = Dense(self.regression_output_dim, activation='linear', name='regression_output')(encoded_output)
 
         self.full_model = Model(inputs=full_model_input, outputs=regression_output, name='sae_traffic_predictor')
         self.full_model.compile(optimizer=Adam(learning_rate=self.learning_rate), loss='mse') # MSE for regression
@@ -121,7 +119,7 @@ class StackedAutoencoder:
 
         for i, autoencoder in enumerate(self.autoencoders):
             print(f"\nPre-training Autoencoder {i+1}/{len(self.autoencoders)}...")
-            print(f"  Input shape for this autoencoder: {current_data.shape}")
+            print(f"   Input shape for this autoencoder: {current_data.shape}")
             autoencoder.fit(current_data, current_data,
                             epochs=epochs,
                             batch_size=batch_size,
@@ -133,7 +131,7 @@ class StackedAutoencoder:
             encoder_output = autoencoder.layers[1].output
             encoder_model_for_next_layer = Model(inputs=autoencoder.input, outputs=encoder_output)
             current_data = encoder_model_for_next_layer.predict(current_data)
-            print(f"  Output shape from encoder for next layer: {current_data.shape}")
+            print(f"   Output shape from encoder for next layer: {current_data.shape}")
 
         print("\nStacked Autoencoders pre-training complete.")
 
@@ -150,15 +148,16 @@ class StackedAutoencoder:
         """
         if self.full_model is None:
             print("Full model not built. Please call _build_full_model() or initialize the class.")
-            return
+            return None # Return None to indicate failure
 
         print("\nTraining the full SAE Traffic Predictor model...")
-        self.full_model.fit(X_train, y_train,
-                            epochs=epochs,
-                            batch_size=batch_size,
-                            validation_split=validation_split,
-                            verbose=1)
+        history = self.full_model.fit(X_train, y_train,
+                               epochs=epochs,
+                               batch_size=batch_size,
+                               validation_split=validation_split,
+                               verbose=1)
         print("\nFull model training complete.")
+        return history # Return history for plotting
 
     def predict(self, X_test):
         """
@@ -201,7 +200,6 @@ class StackedAutoencoder:
         except Exception as e:
             print(f"Error loading model from {filepath}: {e}")
             self.full_model = None
-
 
 # Example usage (for testing this module directly)
 if __name__ == "__main__":
