@@ -27,7 +27,11 @@ class TFPSApp:
         # Initialize data_loader with the base filename.
         # The data_loader itself will prepend 'data/' to this filename.
         self.data_loader = TrafficDataLoader('Scats Data October 2006.csv')
-        self.sae_model = StackedAutoencoder() # This will be initialized with input_dim later
+        
+        # Initialize sae_model with the correct input_dim and encoding_dims
+        # input_dim is 18 based on your dataloader.py feature_columns
+        self.sae_model = StackedAutoencoder(input_dim=18, encoding_dims=[128, 64, 32])
+        
         self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
         self.scaler = None # To store the scaler from data_loader
         self.trained_model = None # To store the trained Keras model
@@ -81,12 +85,20 @@ class TFPSApp:
         # Configuration for column weights
         csv_frame.grid_columnconfigure(1, weight=1)
 
-    def load_and_process_data(self):
-        self.data_status_label.config(text="Status: Loading and preprocessing data...")
-        # No need to get csv_filename from entry or update data_loader.csv_file_path here,
-        # as it's already correctly set in __init__ of TFPSApp and DataLoader.
-        # The DataLoader will automatically prepend 'data/' to the filename.
+    def update_status(self, message, label_type="data"):
+        """Helper to update status labels and ensure GUI updates."""
+        if label_type == "data":
+            self.data_status_label.config(text=message)
+        elif label_type == "model":
+            self.model_status_label.config(text=message)
+        elif label_type == "prediction":
+            # Add prediction status label if needed
+            pass
+        self.master.update_idletasks() # Force GUI update
 
+    def load_and_process_data(self):
+        self.update_status("Status: Loading and preprocessing data...", "data")
+        
         try:
             # Step 1: Load and initial clean
             self.data_loader.load_and_initial_clean()
@@ -102,19 +114,18 @@ class TFPSApp:
             self.X_train, self.X_test, self.y_train, self.y_test = self.data_loader.chronological_train_test_split(X_scaled, y)
             self.scaler = scaler # Store the scaler for later inverse transformation
 
-            self.data_status_label.config(text="Status: Data loaded and preprocessed successfully!")
+            self.update_status("Status: Data loaded and preprocessed successfully!", "data")
             messagebox.showinfo("Data Load Success", "Traffic data loaded and preprocessed successfully!")
 
         except FileNotFoundError:
-            # Display the full path that dataloader tried to open
             messagebox.showerror("File Error", f"CSV file not found at: '{self.data_loader.csv_file_path}'. Please ensure it's in the correct 'data/' subdirectory relative to where the application is launched.")
-            self.data_status_label.config(text="Status: Error loading data (File not found)")
+            self.update_status("Status: Error loading data (File not found)", "data")
         except pd.errors.EmptyDataError:
             messagebox.showerror("Data Error", "CSV file is empty or malformed.")
-            self.data_status_label.config(text="Status: Error loading data (Empty CSV)")
+            self.update_status("Status: Error loading data (Empty CSV)", "data")
         except Exception as e:
             messagebox.showerror("Error", f"An unexpected error occurred during data loading: {e}")
-            self.data_status_label.config(text="Status: Error loading data")
+            self.update_status("Status: Error loading data", "data")
             print(f"Error during data loading: {e}") # Print to console for debugging
 
     def create_model_widgets(self, tab):
@@ -151,7 +162,7 @@ class TFPSApp:
         model_frame.grid_rowconfigure(3, weight=1) # Allow plot to expand
 
     def start_model_training(self):
-        if self.X_train is None:
+        if self.X_train is None or self.y_train is None:
             messagebox.showwarning("Training Error", "Please load and preprocess data first.")
             return
 
@@ -163,7 +174,7 @@ class TFPSApp:
             messagebox.showerror("Input Error", f"Invalid epochs value: {e}")
             return
 
-        self.model_status_label.config(text="Status: Training model (This may take a while)...")
+        self.update_status("Status: Training model (This may take a while)...", "model")
         self.train_button.config(state=tk.DISABLED) # Disable button during training
         self.progress_bar.config(mode="indeterminate")
         self.progress_bar.start()
@@ -174,15 +185,16 @@ class TFPSApp:
 
     def train_model_thread(self, epochs):
         try:
-            # The input shape for the SAE model should match the number of features
-            input_dim = self.X_train.shape[1]
-            self.sae_model.build_model(input_dim)
+            # Step 1: Pre-train autoencoders
+            # The X_train here is the scaled features from the DataLoader
+            self.sae_model.pretrain_autoencoders(self.X_train.values, epochs=epochs, batch_size=32)
 
-            # Train the model
-            history = self.sae_model.train_model(self.X_train.values, epochs=epochs, batch_size=32)
-            self.trained_model = self.sae_model.model # Store the trained Keras model instance
+            # Step 2: Train the full model
+            # Use X_train.values and y_train.values for numpy array input
+            history = self.sae_model.train_full_model(self.X_train.values, self.y_train.values, epochs=epochs, batch_size=32)
+            self.trained_model = self.sae_model.full_model # Store the trained Keras model instance
 
-            # Plot training history
+            # Plot training history (assuming history object is returned by train_full_model)
             self.ax.clear()
             self.ax.plot(history.history['loss'], label='Training Loss')
             if 'val_loss' in history.history:
@@ -201,7 +213,7 @@ class TFPSApp:
             print(f"Error during model training: {e}")
 
     def update_model_training_status(self, message, success):
-        self.model_status_label.config(text=message)
+        self.update_status(message, "model")
         self.progress_bar.stop()
         self.progress_bar.config(mode="determinate", value=0)
         self.train_button.config(state=tk.NORMAL) # Re-enable button
