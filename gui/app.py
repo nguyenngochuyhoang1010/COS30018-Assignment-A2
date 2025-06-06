@@ -3,7 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 import pandas as pd
 import numpy as np
 import os
-import threading
+import threading # For running training in background
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -39,6 +39,9 @@ class TFPSApp:
         self.scaler = None # To store the scaler from data_loader
         
         self.create_widgets()
+
+        # NEW: Handle window closing gracefully
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_widgets(self):
         # Create a notebook (tabbed interface)
@@ -199,8 +202,8 @@ class TFPSApp:
         self.progress_bar.config(mode="indeterminate")
         self.progress_bar.start()
 
-        # Run training in a separate thread to keep GUI responsive
-        training_thread = threading.Thread(target=self.train_model_thread, args=(epochs, selected_model_name))
+        # NEW: Make the thread a daemon thread
+        training_thread = threading.Thread(target=self.train_model_thread, args=(epochs, selected_model_name), daemon=True)
         training_thread.start()
 
     def train_model_thread(self, epochs, model_name):
@@ -252,6 +255,14 @@ class TFPSApp:
             messagebox.showinfo("Model Training", message)
         else:
             messagebox.showerror("Model Training Error", message)
+
+    def on_closing(self):
+        """
+        Handles the window close event to ensure proper application termination.
+        """
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.master.destroy() # Destroys the main Tkinter window
+            # Daemon threads will terminate automatically when main thread exits.
 
     def create_prediction_widgets(self, tab):
         prediction_frame = ttk.LabelFrame(tab, text="Traffic Prediction")
