@@ -204,6 +204,9 @@ class TFPSApp:
         training_thread.start()
 
     def train_model_thread(self, epochs, model_name):
+        # Define a common batch size for both models, adjust as needed for performance/memory
+        current_batch_size = 64 # Changed from 32 to 64 for potential speedup
+
         try:
             X_train_data = self.X_train.values # Convert DataFrame to NumPy array
             y_train_data = self.y_train.values # Convert Series to NumPy array
@@ -211,15 +214,15 @@ class TFPSApp:
             if model_name == "Stacked Autoencoder":
                 self.active_model = self.sae_model # Set SAE as active model
                 # Pre-train autoencoders
-                self.sae_model.pretrain_autoencoders(X_train_data, epochs=epochs // 2, batch_size=32)
+                self.sae_model.pretrain_autoencoders(X_train_data, epochs=epochs // 2, batch_size=current_batch_size)
                 # Train the full model
-                history = self.sae_model.train_full_model(X_train_data, y_train_data, epochs=epochs, batch_size=32)
+                history = self.sae_model.train_full_model(X_train_data, y_train_data, epochs=epochs, batch_size=current_batch_size)
             elif model_name == "LSTM":
                 self.active_model = self.lstm_model # Set LSTM as active model
                 # Reshape data for LSTM: (samples, timesteps, features)
                 # Current X_train_data is (samples, 18), so reshape to (samples, 1, 18)
                 X_train_reshaped = X_train_data.reshape(X_train_data.shape[0], self.lstm_model.timesteps, X_train_data.shape[1])
-                history = self.lstm_model.train(X_train_reshaped, y_train_data, epochs=epochs, batch_size=32)
+                history = self.lstm_model.train(X_train_reshaped, y_train_data, epochs=epochs, batch_size=current_batch_size)
             else:
                 raise ValueError("Unknown model selected.")
 
