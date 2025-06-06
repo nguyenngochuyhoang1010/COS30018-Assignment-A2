@@ -38,12 +38,21 @@ class StackedAutoencoder:
         This method trains each autoencoder sequentially (greedy layer-wise training).
         """
         current_input_dim = self.input_dim
-        current_input_layer = Input(shape=(self.input_dim,)) # For the first autoencoder
+        # The first input layer for the *first* autoencoder is based on self.input_dim
+        first_autoencoder_input = Input(shape=(self.input_dim,)) 
 
         print("Building Stacked Autoencoders (greedy layer-wise training)...")
 
+        # Keep track of the *previous* encoder's output for chaining
+        # This will be updated in the loop
+        previous_encoded_layer = first_autoencoder_input
+
         for i, encoding_dim in enumerate(self.encoding_dims):
             print(f"   Building Autoencoder Layer {i+1} with encoding dim: {encoding_dim}")
+
+            # NEW: Create a new Input layer for each autoencoder based on the current_input_dim
+            # This ensures each autoencoder correctly expects the input shape from the *previous* layer's output
+            autoencoder_input_layer = Input(shape=(current_input_dim,), name=f'ae_{i+1}_input')
 
             # Encoder part
             encoder_layer = Dense(encoding_dim, activation='relu', name=f'encoder_h{i+1}')
@@ -51,29 +60,40 @@ class StackedAutoencoder:
             decoder_layer = Dense(current_input_dim, activation='sigmoid', name=f'decoder_h{i+1}') # Sigmoid for reconstruction
 
             # Connect layers for the current autoencoder
-            encoded = encoder_layer(current_input_layer)
+            # The input to the current autoencoder is `autoencoder_input_layer`
+            encoded = encoder_layer(autoencoder_input_layer)
             decoded = decoder_layer(encoded)
 
             # Define the current autoencoder model
-            autoencoder = Model(inputs=current_input_layer, outputs=decoded, name=f'autoencoder_{i+1}')
+            autoencoder = Model(inputs=autoencoder_input_layer, outputs=decoded, name=f'autoencoder_{i+1}')
             autoencoder.compile(optimizer=Adam(learning_rate=self.learning_rate), loss='mse')
             self.autoencoders.append(autoencoder)
 
-            # Update input for the next autoencoder: output of the current encoder
-            current_input_layer = encoded # The output of the current encoder becomes input for the next
-            current_input_dim = encoding_dim # The dimension of the next input
+            # Update for the next iteration: the next autoencoder's input dimension
+            # will be the current encoding_dim (output of this encoder)
+            current_input_dim = encoding_dim
+            # Also, for building the stacked encoder model later, we need to apply the encoder_layer
+            # to the previous_encoded_layer to correctly chain them up.
+            if i == 0: # For the very first autoencoder, the input is the original input
+                previous_encoded_layer = encoder_layer(first_autoencoder_input)
+            else: # For subsequent autoencoders, chain from the output of the previous encoder
+                previous_encoded_layer = encoder_layer(previous_encoded_layer)
+
 
         # After building all individual autoencoders, create the full encoder model
         # The encoder model takes the original input and outputs the final encoded representation
-        x = Input(shape=(self.input_dim,))
-        current_output = x
+        # It's constructed by applying the trained encoder layers sequentially.
+        x = Input(shape=(self.input_dim,)) # Original input for the stacked encoder
+        current_encoder_output = x
         for i, encoding_dim in enumerate(self.encoding_dims):
-            # Extract the encoder layer from the trained autoencoder
-            # Ensure the weights are transferred correctly (they are by get_layer)
-            encoder_layer = self.autoencoders[i].get_layer(f'encoder_h{i+1}')
-            current_output = encoder_layer(current_output)
+            # Extract the *trained* encoder layer from the stored autoencoders
+            # and apply it sequentially to form the full stacked encoder model.
+            encoder_layer_from_trained_ae = self.autoencoders[i].get_layer(f'encoder_h{i+1}')
+            # Ensure these layers are not trainable initially if we want to freeze them after pre-training
+            # For now, we are just creating the model structure.
+            current_encoder_output = encoder_layer_from_trained_ae(current_encoder_output)
 
-        self.encoder_model = Model(inputs=x, outputs=current_output, name='stacked_encoder')
+        self.encoder_model = Model(inputs=x, outputs=current_encoder_output, name='stacked_encoder')
         print("\nStacked Encoder Model Summary:")
         self.encoder_model.summary()
 
@@ -89,12 +109,10 @@ class StackedAutoencoder:
         print("\nBuilding Full Model (SAE + Regression Layer)...")
         full_model_input = Input(shape=(self.input_dim,))
 
-        # --- FIX STARTS HERE ---
         # Pass the input through the entire pre-trained encoder model directly.
         # This treats self.encoder_model as a single, callable block.
         encoded_output = self.encoder_model(full_model_input)
-        # --- FIX ENDS HERE ---
-
+        
         # Add a regression output layer
         regression_output = Dense(self.regression_output_dim, activation='linear', name='regression_output')(encoded_output)
 
@@ -115,21 +133,26 @@ class StackedAutoencoder:
             validation_split (float): Fraction of the training data to be used as validation data.
         """
         print("\nStarting greedy layer-wise pre-training of autoencoders...")
-        current_data = X_train
+        current_data = X_train # This is the original input data for the first autoencoder
 
         for i, autoencoder in enumerate(self.autoencoders):
             print(f"\nPre-training Autoencoder {i+1}/{len(self.autoencoders)}...")
             print(f"   Input shape for this autoencoder: {current_data.shape}")
+            
+            # The autoencoder expects input of shape (current_data.shape[1],)
+            # We fit it with current_data as both input and target for reconstruction
             autoencoder.fit(current_data, current_data,
                             epochs=epochs,
                             batch_size=batch_size,
                             validation_split=validation_split,
                             verbose=1)
 
-            # Get the encoded representation to use as input for the next autoencoder
-            # The encoder layer is the first Dense layer in each autoencoder model
-            encoder_output = autoencoder.layers[1].output
-            encoder_model_for_next_layer = Model(inputs=autoencoder.input, outputs=encoder_output)
+            # Get the encoded representation from the *trained* autoencoder for the next layer
+            # We need to get the output of the encoder part of the autoencoder
+            # The encoder part is the first Dense layer (index 1) of the autoencoder model
+            # We create a temporary model to get the output of just the encoder layer
+            encoder_output_tensor = autoencoder.layers[1].output
+            encoder_model_for_next_layer = Model(inputs=autoencoder.input, outputs=encoder_output_tensor)
             current_data = encoder_model_for_next_layer.predict(current_data)
             print(f"   Output shape from encoder for next layer: {current_data.shape}")
 
@@ -201,17 +224,18 @@ class StackedAutoencoder:
             print(f"Error loading model from {filepath}: {e}")
             self.full_model = None
 
+
 # Example usage (for testing this module directly)
 if __name__ == "__main__":
     # Dummy data for demonstration
     # In a real scenario, X_train would come from your DataLoader
-    input_dim = 20 # Example number of features
+    input_dim = 18 # Example number of features from your DataLoader
     X_train_dummy = np.random.rand(1000, input_dim)
     y_train_dummy = np.random.rand(1000, 1) * 100 # Example target
 
     # Initialize SAE with encoding dimensions
-    # For instance, two autoencoder layers with 10 and 5 neurons respectively
-    sae = StackedAutoencoder(input_dim=input_dim, encoding_dims=[10, 5])
+    # For instance, two autoencoder layers with 128 and 64 neurons
+    sae = StackedAutoencoder(input_dim=input_dim, encoding_dims=[128, 64]) # Updated encoding dims for test
 
     # Pre-train autoencoders
     sae.pretrain_autoencoders(X_train_dummy, epochs=10)
@@ -227,7 +251,7 @@ if __name__ == "__main__":
 
     # Save and load example
     sae.save_model('test_sae_model.h5')
-    loaded_sae = StackedAutoencoder(input_dim=input_dim, encoding_dims=[10, 5]) # Re-initialize for loading
+    loaded_sae = StackedAutoencoder(input_dim=input_dim, encoding_dims=[128, 64]) # Re-initialize for loading
     loaded_sae.load_model('test_sae_model.h5')
     loaded_predictions = loaded_sae.predict(X_test_dummy)
     print("\nSample Predictions from loaded model:")
