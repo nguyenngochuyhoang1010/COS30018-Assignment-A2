@@ -3,15 +3,17 @@ from tkinter import ttk, filedialog, messagebox
 import pandas as pd
 import numpy as np
 import os
-import threading # For running training in background
+import threading
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+import webbrowser # NEW: For opening HTML map in browser
+import folium     # NEW: For creating interactive maps
 
 # Adjust these imports based on your file structure
 from utils.dataloader import TrafficDataLoader
 from model.saemodel import StackedAutoencoder
-from model.lstm_model import LSTMTrafficPredictor # NEW: Import LSTM model
+from model.lstm_model import LSTMTrafficPredictor
 
 class TFPSApp:
     """
@@ -62,6 +64,10 @@ class TFPSApp:
         self.future_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.future_tab, text="4. Route Guidance (Future)")
         self.create_future_widgets(self.future_tab)
+        # NEW: Add a "Visualize Map" button to the Future tab
+        self.visualize_map_button = ttk.Button(self.future_tab, text="Visualize SCATS Sites on Map", command=self.create_and_show_map)
+        self.visualize_map_button.pack(padx=20, pady=20)
+
 
     def create_data_widgets(self, tab):
         # Frame for CSV File selection
@@ -116,6 +122,13 @@ class TFPSApp:
 
             self.update_status("Status: Data loaded and preprocessed successfully!", "data")
             messagebox.showinfo("Data Load Success", "Traffic data loaded and preprocessed successfully!")
+
+            # After data is loaded, populate SCATS site combo for prediction
+            if self.data_loader.df_final is not None:
+                scats_numbers = sorted(self.data_loader.df_final['SCATS Number'].unique().tolist())
+                self.scats_site_combo['values'] = scats_numbers
+                if scats_numbers:
+                    self.scats_site_combo.set(scats_numbers[0]) # Set default to first SCATS number
 
         except FileNotFoundError:
             messagebox.showerror("File Error", f"CSV file not found at: '{self.data_loader.csv_file_path}'. Please ensure it's in the correct 'data/' subdirectory relative to where the application is launched.")
@@ -242,6 +255,7 @@ class TFPSApp:
         prediction_frame.pack(padx=10, pady=10, fill="x")
 
         ttk.Label(prediction_frame, text="SCATS Site:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        # Changed to Combobox for SCATS site selection (populated after data load)
         self.scats_site_combo = ttk.Combobox(prediction_frame, width=15, state="readonly")
         self.scats_site_combo.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
@@ -337,13 +351,16 @@ class TFPSApp:
             
             # Make prediction using the active model
             predicted_scaled_volume = self.active_model.predict(predict_input_scaled)
+
             predicted_volume = predicted_scaled_volume[0][0] # Assuming single output regression
+
             self.prediction_result_label.config(text=f"Predicted Traffic Volume: {predicted_volume:.2f} vehicles")
 
         except Exception as e:
             messagebox.showerror("Prediction Error", f"An error occurred during prediction: {e}")
             self.prediction_result_label.config(text="Predicted Traffic Volume: Error")
             print(f"Error during prediction: {e}")
+
 
     def create_future_widgets(self, tab):
         ttk.Label(tab, text="This tab is for future route guidance functionalities.").pack(padx=20, pady=20)
