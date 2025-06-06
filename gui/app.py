@@ -366,6 +366,52 @@ class TFPSApp:
         ttk.Label(tab, text="This tab is for future route guidance functionalities.").pack(padx=20, pady=20)
         # Add widgets for future development here
 
+    # NEW METHOD: For creating and showing the map
+    def create_and_show_map(self):
+        if self.data_loader.df_final is None:
+            messagebox.showwarning("Map Error", "Please load and process data first to visualize SCATS sites.")
+            return
+
+        map_file_path = "traffic_map.html"
+        
+        try:
+            # Get unique SCATS sites with their latest known coordinates
+            # This extracts the latest latitude and longitude for each unique SCATS site
+            scats_locations = self.data_loader.df_final.groupby('SCATS Number').agg({
+                'NB_LATITUDE': 'last',
+                'NB_LONGITUDE': 'last',
+                'Location': 'first' # Get any location name for display
+            }).reset_index()
+
+            if scats_locations.empty:
+                messagebox.showwarning("Map Error", "No SCATS site data available for mapping.")
+                return
+
+            # Determine map center (average of all latitudes/longitudes)
+            map_center = [scats_locations['NB_LATITUDE'].mean(), scats_locations['NB_LONGITUDE'].mean()]
+            
+            # Create a Folium map object
+            m = folium.Map(location=map_center, zoom_start=12)
+
+            # Add markers for each SCATS site
+            for idx, row in scats_locations.iterrows():
+                folium.Marker(
+                    location=[row['NB_LATITUDE'], row['NB_LONGITUDE']],
+                    popup=f"SCATS ID: {row['SCATS Number']}<br>Location: {row['Location']}",
+                    tooltip=f"SCATS ID: {row['SCATS Number']}"
+                ).add_to(m)
+
+            # Save the map to an HTML file
+            m.save(map_file_path)
+            
+            # Open the HTML file in the default web browser
+            webbrowser.open(map_file_path)
+            messagebox.showinfo("Map Generated", f"Interactive map generated and opened in browser: {map_file_path}")
+
+        except Exception as e:
+            messagebox.showerror("Map Generation Error", f"An error occurred while generating the map: {e}")
+            print(f"Map generation error: {e}")
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = TFPSApp(root)
