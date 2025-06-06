@@ -323,11 +323,11 @@ class TFPSApp:
                 'minute': prediction_datetime.minute,
                 'day_of_week': prediction_datetime.dayofweek,
                 'day_of_year': prediction_datetime.dayofyear,
-                # Fix: Removed .astype(int) as it's already an int
-                'week_of_year': prediction_datetime.isocalendar().week, 
+                # Fix: Removed .astype(int) as it's already an int (from previous fix)
+                'week_of_year': prediction_datetime.isocalendar().week,
                 'month': prediction_datetime.month,
                 'year': prediction_datetime.year,
-                'is_weekend': (prediction_datetime.dayofweek >= 5).astype(int)
+                'is_weekend': int(prediction_datetime.dayofweek >= 5) # Fix for 'bool' object has no attribute 'astype'
             }])
 
             # Populate lag features by looking up historical data
