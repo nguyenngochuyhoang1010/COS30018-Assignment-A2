@@ -323,7 +323,8 @@ class TFPSApp:
                 'minute': prediction_datetime.minute,
                 'day_of_week': prediction_datetime.dayofweek,
                 'day_of_year': prediction_datetime.dayofyear,
-                'week_of_year': prediction_datetime.isocalendar().week.astype(int),
+                # Fix: Removed .astype(int) as it's already an int
+                'week_of_year': prediction_datetime.isocalendar().week, 
                 'month': prediction_datetime.month,
                 'year': prediction_datetime.year,
                 'is_weekend': (prediction_datetime.dayofweek >= 5).astype(int)
