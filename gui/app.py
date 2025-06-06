@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # Adjust these imports based on your file structure
 from utils.dataloader import TrafficDataLoader
 from model.saemodel import StackedAutoencoder
-
+from model.lstm_model import LSTMTrafficPredictor # NEW: Import LSTM model
 
 class TFPSApp:
     """
@@ -25,17 +25,17 @@ class TFPSApp:
         master.geometry("800x700") # Set initial window size
 
         # Initialize data_loader with the base filename.
-        # The data_loader itself will prepend 'data/' to this filename.
         self.data_loader = TrafficDataLoader('Scats Data October 2006.csv')
         
-        # Initialize sae_model with the correct input_dim and encoding_dims
+        # Initialize both model instances. We will select which one to use later.
         # input_dim is 18 based on your dataloader.py feature_columns
         self.sae_model = StackedAutoencoder(input_dim=18, encoding_dims=[128, 64, 32])
+        self.lstm_model = LSTMTrafficPredictor(input_dim=18, units=50) # Default LSTM units
         
+        self.active_model = None # This will hold the currently selected and trained model
         self.X_train, self.X_test, self.y_train, self.y_test = None, None, None, None
         self.scaler = None # To store the scaler from data_loader
-        self.trained_model = None # To store the trained Keras model
-
+        
         self.create_widgets()
 
     def create_widgets(self):
@@ -132,20 +132,26 @@ class TFPSApp:
         model_frame = ttk.LabelFrame(tab, text="Model Training")
         model_frame.pack(padx=10, pady=10, fill="x")
 
-        ttk.Label(model_frame, text="Epochs:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        # Model Selection
+        ttk.Label(model_frame, text="Select Model:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.model_selection = ttk.Combobox(model_frame, values=["Stacked Autoencoder", "LSTM"], state="readonly")
+        self.model_selection.set("Stacked Autoencoder") # Default selection
+        self.model_selection.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        ttk.Label(model_frame, text="Epochs:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
         self.epochs_entry = ttk.Entry(model_frame, width=10)
-        self.epochs_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.epochs_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
         self.epochs_entry.insert(0, "50") # Default epochs
 
         self.train_button = ttk.Button(model_frame, text="Train Model", command=self.start_model_training)
-        self.train_button.grid(row=0, column=2, padx=5, pady=5)
+        self.train_button.grid(row=1, column=2, padx=5, pady=5) # Adjusted row
 
         self.model_status_label = ttk.Label(model_frame, text="Status: Model not trained.")
-        self.model_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="w")
+        self.model_status_label.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky="w") # Adjusted row
 
         # Placeholder for training progress bar (optional)
         self.progress_bar = ttk.Progressbar(model_frame, orient="horizontal", length=300, mode="determinate")
-        self.progress_bar.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+        self.progress_bar.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="ew") # Adjusted row
 
         # Placeholder for training plot (e.g., loss curve)
         self.fig = Figure(figsize=(6, 4), dpi=100)
@@ -156,10 +162,10 @@ class TFPSApp:
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=model_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
-        self.canvas_widget.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+        self.canvas_widget.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky="nsew") # Adjusted row
 
         model_frame.grid_columnconfigure(1, weight=1)
-        model_frame.grid_rowconfigure(3, weight=1) # Allow plot to expand
+        model_frame.grid_rowconfigure(4, weight=1) # Allow plot to expand
 
     def start_model_training(self):
         if self.X_train is None or self.y_train is None:
@@ -174,39 +180,48 @@ class TFPSApp:
             messagebox.showerror("Input Error", f"Invalid epochs value: {e}")
             return
 
-        self.update_status("Status: Training model (This may take a while)...", "model")
+        selected_model_name = self.model_selection.get()
+        self.update_status(f"Status: Training {selected_model_name} (This may take a while)...", "model")
         self.train_button.config(state=tk.DISABLED) # Disable button during training
         self.progress_bar.config(mode="indeterminate")
         self.progress_bar.start()
 
         # Run training in a separate thread to keep GUI responsive
-        training_thread = threading.Thread(target=self.train_model_thread, args=(epochs,))
+        training_thread = threading.Thread(target=self.train_model_thread, args=(epochs, selected_model_name))
         training_thread.start()
 
-    def train_model_thread(self, epochs):
+    def train_model_thread(self, epochs, model_name):
         try:
-            # Step 1: Pre-train autoencoders
-            # The X_train here is the scaled features from the DataLoader
-            self.sae_model.pretrain_autoencoders(self.X_train.values, epochs=epochs, batch_size=32)
+            X_train_data = self.X_train.values # Convert DataFrame to NumPy array
+            y_train_data = self.y_train.values # Convert Series to NumPy array
 
-            # Step 2: Train the full model
-            # Use X_train.values and y_train.values for numpy array input
-            history = self.sae_model.train_full_model(self.X_train.values, self.y_train.values, epochs=epochs, batch_size=32)
-            self.trained_model = self.sae_model.full_model # Store the trained Keras model instance
+            if model_name == "Stacked Autoencoder":
+                self.active_model = self.sae_model # Set SAE as active model
+                # Pre-train autoencoders
+                self.sae_model.pretrain_autoencoders(X_train_data, epochs=epochs // 2, batch_size=32)
+                # Train the full model
+                history = self.sae_model.train_full_model(X_train_data, y_train_data, epochs=epochs, batch_size=32)
+            elif model_name == "LSTM":
+                self.active_model = self.lstm_model # Set LSTM as active model
+                # Reshape data for LSTM: (samples, timesteps, features)
+                # Current X_train_data is (samples, 18), so reshape to (samples, 1, 18)
+                X_train_reshaped = X_train_data.reshape(X_train_data.shape[0], self.lstm_model.timesteps, X_train_data.shape[1])
+                history = self.lstm_model.train(X_train_reshaped, y_train_data, epochs=epochs, batch_size=32)
+            else:
+                raise ValueError("Unknown model selected.")
 
-            # Plot training history (assuming history object is returned by train_full_model)
+            # Plot training history (assuming history object is returned by train/train_full_model)
             self.ax.clear()
             self.ax.plot(history.history['loss'], label='Training Loss')
             if 'val_loss' in history.history:
                 self.ax.plot(history.history['val_loss'], label='Validation Loss')
-            self.ax.set_title("Training Loss")
+            self.ax.set_title(f"{model_name} Training Loss")
             self.ax.set_xlabel("Epoch")
             self.ax.set_ylabel("Loss (MSE)")
             self.ax.legend()
             self.canvas.draw_idle()
 
-
-            self.master.after(0, self.update_model_training_status, "Status: Model trained successfully!", True)
+            self.master.after(0, self.update_model_training_status, f"Status: {model_name} trained successfully!", True)
 
         except Exception as e:
             self.master.after(0, self.update_model_training_status, f"Status: Error during training: {e}", False)
@@ -218,7 +233,7 @@ class TFPSApp:
         self.progress_bar.config(mode="determinate", value=0)
         self.train_button.config(state=tk.NORMAL) # Re-enable button
         if success:
-            messagebox.showinfo("Model Training", "Model trained successfully!")
+            messagebox.showinfo("Model Training", message)
         else:
             messagebox.showerror("Model Training Error", message)
 
@@ -227,97 +242,108 @@ class TFPSApp:
         prediction_frame.pack(padx=10, pady=10, fill="x")
 
         ttk.Label(prediction_frame, text="SCATS Site:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.scats_site_entry = ttk.Entry(prediction_frame, width=20)
-        self.scats_site_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        # Example default value if available, or fetch from loaded data
-        # self.scats_site_entry.insert(0, "SCATS Number (e.g., 249)")
+        self.scats_site_combo = ttk.Combobox(prediction_frame, width=15, state="readonly")
+        self.scats_site_combo.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
         ttk.Label(prediction_frame, text="Date (MM/DD/YYYY):").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.date_entry = ttk.Entry(prediction_frame, width=20)
+        self.date_entry = ttk.Entry(prediction_frame, width=15)
+        self.date_entry.insert(0, "10/01/2006") # Example date
         self.date_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
-        self.date_entry.insert(0, "10/01/2006") # Example default date
 
         ttk.Label(prediction_frame, text="Time (HH:MM):").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.time_entry = ttk.Entry(prediction_frame, width=20)
+        self.time_entry = ttk.Entry(prediction_frame, width=15)
+        self.time_entry.insert(0, "08:00") # Example time
         self.time_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
-        self.time_entry.insert(0, "08:00") # Example default time
 
         self.predict_button = ttk.Button(prediction_frame, text="Predict Traffic", command=self.predict_traffic)
-        self.predict_button.grid(row=3, column=0, columnspan=2, padx=5, pady=10)
+        self.predict_button.grid(row=0, column=2, rowspan=3, padx=5, pady=5, sticky="ns")
 
-        ttk.Label(prediction_frame, text="Predicted Traffic Volume:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
-        self.predicted_volume_label = ttk.Label(prediction_frame, text="N/A")
-        self.predicted_volume_label.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+        self.prediction_result_label = ttk.Label(prediction_frame, text="Predicted Traffic Volume: N/A")
+        self.prediction_result_label.grid(row=3, column=0, columnspan=3, padx=5, pady=5, sticky="w")
 
         prediction_frame.grid_columnconfigure(1, weight=1)
 
     def predict_traffic(self):
-        if self.trained_model is None:
-            messagebox.showwarning("Prediction Error", "Please train the model first.")
+        if self.active_model is None: # Use active_model
+            messagebox.showwarning("Prediction Error", "Please train a model first.")
             return
-        if self.X_test is None or self.y_test is None:
-            messagebox.showwarning("Prediction Error", "Data not loaded/processed. Cannot make predictions.")
+        if self.X_train is None or self.y_train is None or self.scaler is None: # Use X_train for column names
+            messagebox.showwarning("Prediction Error", "Data not loaded or processed correctly.")
             return
 
-        scats_site_input = self.scats_site_entry.get()
-        date_input = self.date_entry.get()
-        time_input = self.time_entry.get()
+        scats_number = self.scats_site_combo.get()
+        date_str = self.date_entry.get()
+        time_str = self.time_entry.get()
+
+        if not scats_number or not date_str or not time_str:
+            messagebox.showerror("Input Error", "Please fill in all prediction fields.")
+            return
 
         try:
-            # Combine date and time
-            prediction_datetime_str = f"{date_input} {time_input}"
-            prediction_dt = pd.to_datetime(prediction_datetime_str, format="%m/%d/%Y %H:%M", errors='raise')
-
-            # Filter relevant data for the specific SCATS site to get its latest features
-            # This is a simplified approach. A more robust system would interpolate or find closest known data.
-            target_scats_data = self.data_loader.df_final[
-                (self.data_loader.df_final['SCATS Number'] == int(scats_site_input)) &
-                (self.data_loader.df_final['Date_Time'] < prediction_dt)
-            ].sort_values(by='Date_Time', ascending=False)
-
-            if target_scats_data.empty:
-                messagebox.showerror("Prediction Error", f"No historical data found for SCATS site {scats_site_input} before the specified time.")
-                return
-
-            # Take the most recent entry for the site to get its base features
-            # This assumes that other features (like lat/long, etc.) are static for a site
-            base_features_row = target_scats_data[self.X_train.columns.tolist()].iloc[0].copy()
-
-            # Update time-based features to match the prediction_dt
-            base_features_row['hour'] = prediction_dt.hour
-            base_features_row['minute'] = prediction_dt.minute
-            base_features_row['day_of_week'] = prediction_dt.dayofweek
-            base_features_row['day_of_year'] = prediction_dt.dayofyear
-            base_features_row['week_of_year'] = prediction_dt.isocalendar().week.astype(int)
-            base_features_row['month'] = prediction_dt.month
-            base_features_row['year'] = prediction_dt.year
-            base_features_row['is_weekend'] = (prediction_dt.dayofweek >= 5).astype(int)
-
-            # For lagged features and rolling mean, this simple approach cannot accurately calculate them
-            # for a future arbitrary timestamp without a more sophisticated time-series imputation/forecasting
-            # of those features themselves. For this example, we'll use the lagged values from the
-            # most recent known point, which is a simplification.
-            # A truly robust solution would require forecasting these lagged features or
-            # having enough sequential data leading up to the prediction_dt.
-
-            # Rescale the single prediction input using the *same scaler* used for training
-            prediction_input_scaled = self.scaler.transform(pd.DataFrame([base_features_row]))
-
-            # Make prediction
-            predicted_scaled_volume = self.trained_model.predict(prediction_input_scaled)
-
-            predicted_volume = predicted_scaled_volume[0][0] # Assuming single output regression
-
-            self.predicted_volume_label.config(text=f"{predicted_volume:.2f} vehicles")
-
+            scats_number = int(scats_number)
+            prediction_datetime = pd.to_datetime(f"{date_str} {time_str}", format="%m/%d/%Y %H:%M")
         except ValueError as e:
-            messagebox.showerror("Input Error", f"Invalid input format: {e}. Please check SCATS Site (integer), Date (MM/DD/YYYY), and Time (HH:MM).")
-        except KeyError as e:
-            messagebox.showerror("Data Error", f"Missing expected column for prediction: {e}. Ensure all features used for training are available.")
-        except Exception as e:
-            messagebox.showerror("Prediction Error", f"An unexpected error occurred during prediction: {e}")
-            print(f"Prediction Error: {e}") # Print to console for debugging
+            messagebox.showerror("Input Error", f"Invalid date or time format: {e}. Use MM/DD/YYYY and HH:MM.")
+            return
 
+        try:
+            # Create a dummy DataFrame for the single prediction point
+            predict_df = pd.DataFrame([{
+                'SCATS Number': scats_number,
+                'Date_Time': prediction_datetime,
+                'hour': prediction_datetime.hour,
+                'minute': prediction_datetime.minute,
+                'day_of_week': prediction_datetime.dayofweek,
+                'day_of_year': prediction_datetime.dayofyear,
+                'week_of_year': prediction_datetime.isocalendar().week.astype(int),
+                'month': prediction_datetime.month,
+                'year': prediction_datetime.year,
+                'is_weekend': (prediction_datetime.dayofweek >= 5).astype(int)
+            }])
+
+            # Populate lag features by looking up historical data
+            historical_site_data = self.data_loader.df_final[
+                self.data_loader.df_final['SCATS Number'] == scats_number
+            ].set_index('Date_Time').sort_index()
+
+            def get_historical_volume(dt):
+                if dt in historical_site_data.index:
+                    return historical_site_data.loc[dt, 'Traffic_Volume']
+                return np.nan
+
+            predict_df['traffic_volume_lag_1'] = get_historical_volume(prediction_datetime - pd.Timedelta(minutes=15))
+            predict_df['traffic_volume_lag_4'] = get_historical_volume(prediction_datetime - pd.Timedelta(hours=1))
+            predict_df['traffic_volume_lag_96'] = get_historical_volume(prediction_datetime - pd.Timedelta(hours=24))
+
+            last_known_rolling_mean = historical_site_data['traffic_volume_rolling_mean_4'].iloc[-1] if not historical_site_data.empty else 0
+            predict_df['traffic_volume_rolling_mean_4'] = last_known_rolling_mean
+
+            predict_features_df = predict_df.drop(columns=['SCATS Number', 'Date_Time'])
+
+            # Ensure the order of columns matches the training data (X_train)
+            model_feature_columns = self.X_train.columns.tolist()
+            predict_input = predict_features_df[model_feature_columns]
+
+            if predict_input.isnull().any().any():
+                messagebox.showwarning("Prediction Warning", "Missing historical data for lag features. Prediction might be inaccurate.")
+                predict_input = predict_input.fillna(0)
+
+            # Scale the input features using the *fitted* scaler
+            predict_input_scaled = self.scaler.transform(predict_input)
+
+            # Reshape for LSTM if the active model is LSTM
+            if isinstance(self.active_model, LSTMTrafficPredictor):
+                predict_input_scaled = predict_input_scaled.reshape(predict_input_scaled.shape[0], self.active_model.timesteps, predict_input_scaled.shape[1])
+            
+            # Make prediction using the active model
+            predicted_scaled_volume = self.active_model.predict(predict_input_scaled)
+            predicted_volume = predicted_scaled_volume[0][0] # Assuming single output regression
+            self.prediction_result_label.config(text=f"Predicted Traffic Volume: {predicted_volume:.2f} vehicles")
+
+        except Exception as e:
+            messagebox.showerror("Prediction Error", f"An error occurred during prediction: {e}")
+            self.prediction_result_label.config(text="Predicted Traffic Volume: Error")
+            print(f"Error during prediction: {e}")
 
     def create_future_widgets(self, tab):
         ttk.Label(tab, text="This tab is for future route guidance functionalities.").pack(padx=20, pady=20)
