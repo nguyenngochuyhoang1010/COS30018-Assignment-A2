@@ -73,14 +73,16 @@ class TrafficDataLoader:
 
         # Create a mapping for 'Time_Interval_Code' (V00-V95) to actual 15-minute time strings.
         # There are 96 intervals in a day (24 hours * 4 intervals/hour).
+        # Fix UserWarning: specify format explicitly
         times = pd.to_datetime([f'{h:02d}:{m:02d}' for h in range(24) for m in [0, 15, 30, 45]]).strftime('%H:%M').tolist()
         time_code_map = {f'V{i:02d}': t for i, t in enumerate(times)}
 
         # Apply the mapping to create a readable 'Time_Interval' column.
         df_melted['Time_Interval'] = df_melted['Time_Interval_Code'].map(time_code_map)
 
-        # Convert 'Date' to datetime objects, handling potential mixed formats by inferring.
-        df_melted['Date'] = pd.to_datetime(df_melted['Date'], infer_datetime_format=True, errors='coerce')
+        # Convert 'Date' to datetime objects. Removed deprecated infer_datetime_format
+        # Fix UserWarning: specify format for 'Date' column
+        df_melted['Date'] = pd.to_datetime(df_melted['Date'], format='%m/%d/%Y', errors='coerce')
 
         # Combine 'Date' and 'Time_Interval' into a single 'Date_Time' column.
         # This is critical for time-series analysis.
@@ -121,7 +123,7 @@ class TrafficDataLoader:
         df['minute'] = df['Date_Time'].dt.minute # Could be useful for 15-min intervals
         df['day_of_week'] = df['Date_Time'].dt.dayofweek # Monday=0, Sunday=6
         df['day_of_year'] = df['Date_Time'].dt.dayofyear
-        df['week_of_year'] = df['Date_Time'].dt.isocalendar().week.astype(int)
+        df['week_of_year'] = df['Date_Time'].dt.isocalendar().week.astype(int) # This was fine, as it's a Series here
         df['month'] = df['Date_Time'].dt.month
         df['year'] = df['Date_Time'].dt.year
         df['is_weekend'] = (df['day_of_week'] >= 5).astype(int) # 1 for Sat/Sun, 0 otherwise
@@ -151,6 +153,13 @@ class TrafficDataLoader:
         initial_rows = len(df)
         df_features = df.dropna(subset=['traffic_volume_lag_96']) # Drop rows where 24-hour lag is NaN
         print(f"Dropped {initial_rows - len(df_features)} rows due to NaN values from lagged features.")
+
+        # NEW FIX: Ensure uniqueness of (SCATS Number, Date_Time) pairs
+        # This prevents 'cannot reindex on an axis with duplicate labels' error
+        original_rows_before_drop = len(df_features)
+        df_features = df_features.drop_duplicates(subset=['SCATS Number', 'Date_Time'])
+        if len(df_features) < original_rows_before_drop:
+            print(f"Dropped {original_rows_before_drop - len(df_features)} duplicate (SCATS Number, Date_Time) entries.")
 
         self.df_final = df_features
 
