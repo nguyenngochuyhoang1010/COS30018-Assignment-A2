@@ -5,36 +5,29 @@ from sklearn.model_selection import train_test_split
 import os # Import os module to handle file paths
 
 class TrafficDataLoader:
-    """
-    A class to load, preprocess, and prepare traffic data for machine learning models.
-    It includes functionalities for data cleaning, feature engineering, and splitting.
-    """
     def __init__(self, csv_file_path):
-        """
-        Initializes the DataLoader with the path to the raw CSV data.
-
-        Args:
-            csv_file_path (str): The path to the 'Scats Data October 2006.csv' file.
-        """
-        # Adjust the path to look inside the 'data' directory
         self.csv_file_path = os.path.join('data', csv_file_path)
         self.df_raw = None
         self.df_processed = None
         self.df_final = None
-        self.scaler = None # Scaler for numerical features
+        self.scaler = None
 
     def load_and_initial_clean(self):
-        """
-        Loads the CSV file, skipping the first header row and renaming the date column.
-        """
         print(f"Loading data from: {self.csv_file_path}")
-        # The actual header is on the second row (index 1), so we use header=1
-        # The first row contains general titles which we can skip.
         self.df_raw = pd.read_csv(self.csv_file_path, header=1)
-
-        # Rename the 'Unnamed: 9' column to 'Date' as it contains the date information.
-        # This column was 'Start Time' in the first header row, but shifted.
         self.df_raw = self.df_raw.rename(columns={'Unnamed: 9': 'Date'})
+
+        # Merge with metadata if available
+        metadata_path = os.path.join('data', 'SCATS_Site_Metadata.csv')
+        if os.path.exists(metadata_path):
+            metadata_df = pd.read_csv(metadata_path)
+            print(f"\nMerging with metadata from: {metadata_path}")
+            print(f"Metadata columns: {metadata_df.columns.tolist()}")
+            self.df_raw = self.df_raw.merge(metadata_df, on='SCATS Number', how='left')
+            print("\nDataFrame head after merge:")
+            print(self.df_raw.head())
+        else:
+            print(f"\nWARNING: Metadata file not found at {metadata_path}. Skipping metadata merge.")
 
         print("Initial DataFrame head after loading and renaming:")
         print(self.df_raw.head())
