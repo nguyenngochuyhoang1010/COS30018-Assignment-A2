@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_9ff712beac20f6382dbf8a62b21e288d {
+                #map_22b7ca48b2849a9807a1cf0af3acc9cb {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -25,6 +25,21 @@
                     top: 0.0%;
                 }
                 .leaflet-container { font-size: 1rem; }
+                /* --- NEW: Style for the notification banner --- */
+                #notification-banner {
+                    display: none; /* Hidden by default */
+                    position: absolute;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 1000; /* Ensure it's on top of the map */
+                    background-color: #ffc107; /* A nice warning yellow */
+                    color: #333;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    font-family: sans-serif;
+                }
             </style>
 
             <style>html, body {
@@ -53,24 +68,25 @@
 </head>
 <body>
     
+    <!-- --- NEW: Notification banner element --- -->
+    <div id="notification-banner">
+        No location data available to display on the map.
+    </div>
     
-            <div class="folium-map" id="map_9ff712beac20f6382dbf8a62b21e288d" ></div>
+            <div class="folium-map" id="map_22b7ca48b2849a9807a1cf0af3acc9cb" ></div>
         
 </body>
 <script>
     
     
-            var map_9ff712beac20f6382dbf8a62b21e288d = L.map(
-                "map_9ff712beac20f6382dbf8a62b21e288d",
+            var map_22b7ca48b2849a9807a1cf0af3acc9cb = L.map(
+                "map_22b7ca48b2849a9807a1cf0af3acc9cb",
                 {
-                    center: [-36.875158784999996, 141.4303000075],
+                    center: [0.0, 0.0],
                     crs: L.CRS.EPSG3857,
-                    ...{
-  "zoom": 12,
-  "zoomControl": true,
-  "preferCanvas": false,
-}
-
+                    zoom: 12,
+                    zoomControl: true,
+                    preferCanvas: false,
                 }
             );
 
@@ -78,1384 +94,155 @@
 
         
     
-            var tile_layer_744ff09789ffefe548aa09e0afb047c0 = L.tileLayer(
+            var tile_layer_865dadda13afefc59033f28ead919197 = L.tileLayer(
                 "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                 {
-  "minZoom": 0,
-  "maxZoom": 19,
-  "maxNativeZoom": 19,
-  "noWrap": false,
-  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
-  "subdomains": "abc",
-  "detectRetina": false,
-  "tms": false,
-  "opacity": 1,
-}
-
+                    "minZoom": 0,
+                    "maxZoom": 19,
+                    "maxNativeZoom": 19,
+                    "noWrap": false,
+                    "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+                    "subdomains": "abc",
+                    "detectRetina": false,
+                    "tms": false,
+                    "opacity": 1,
+                }
             );
         
     
-            tile_layer_744ff09789ffefe548aa09e0afb047c0.addTo(map_9ff712beac20f6382dbf8a62b21e288d);
+            tile_layer_865dadda13afefc59033f28ead919197.addTo(map_22b7ca48b2849a9807a1cf0af3acc9cb);
         
     
-            var marker_1f2743e600a27029b1e49a8fbc288714 = L.marker(
-                [-37.86703, 145.09159],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_dad674e25945c36b8170f28244025fe4 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_a424bbfde73da7e5949cee51ee1f59ea = $(`<div id="html_a424bbfde73da7e5949cee51ee1f59ea" style="width: 100.0%; height: 100.0%;">SCATS ID: 970<br>Location: WARRIGAL_RD N of HIGH STREET_RD</div>`)[0];
-                popup_dad674e25945c36b8170f28244025fe4.setContent(html_a424bbfde73da7e5949cee51ee1f59ea);
-            
-        
-
-        marker_1f2743e600a27029b1e49a8fbc288714.bindPopup(popup_dad674e25945c36b8170f28244025fe4)
-        ;
-
-        
-    
-    
-            marker_1f2743e600a27029b1e49a8fbc288714.bindTooltip(
-                `<div>
-                     SCATS ID: 970
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_37898b880f8a4f35e5de7a320ae99a53 = L.marker(
-                [-37.8516827, 145.0943457],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_b0ec82cf87d34dc9e4bb225453c645b3 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_fc05575371d026c22e3ae7bb7fb72f2e = $(`<div id="html_fc05575371d026c22e3ae7bb7fb72f2e" style="width: 100.0%; height: 100.0%;">SCATS ID: 2000<br>Location: WARRIGAL_RD N of TOORAK_RD</div>`)[0];
-                popup_b0ec82cf87d34dc9e4bb225453c645b3.setContent(html_fc05575371d026c22e3ae7bb7fb72f2e);
-            
-        
-
-        marker_37898b880f8a4f35e5de7a320ae99a53.bindPopup(popup_b0ec82cf87d34dc9e4bb225453c645b3)
-        ;
-
-        
-    
-    
-            marker_37898b880f8a4f35e5de7a320ae99a53.bindTooltip(
-                `<div>
-                     SCATS ID: 2000
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_02afaf6852e686cbe7ed1cf57765f950 = L.marker(
-                [-37.81631, 145.09812],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_75615c157eb1ad1be255157d04b62520 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_4987ac9c59a4db260ca2b875b14d58d7 = $(`<div id="html_4987ac9c59a4db260ca2b875b14d58d7" style="width: 100.0%; height: 100.0%;">SCATS ID: 2200<br>Location: UNION_RD N of MAROONDAH_HWY</div>`)[0];
-                popup_75615c157eb1ad1be255157d04b62520.setContent(html_4987ac9c59a4db260ca2b875b14d58d7);
-            
-        
-
-        marker_02afaf6852e686cbe7ed1cf57765f950.bindPopup(popup_75615c157eb1ad1be255157d04b62520)
-        ;
-
-        
-    
-    
-            marker_02afaf6852e686cbe7ed1cf57765f950.bindTooltip(
-                `<div>
-                     SCATS ID: 2200
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_fbd788074d7be8b07aa0b89cd321e316 = L.marker(
-                [-37.79477, 145.03077],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_f85fc5a85eb32ef5fd5cbf3a6748cb00 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_f5d0a638c7df211f9625fa57a910a894 = $(`<div id="html_f5d0a638c7df211f9625fa57a910a894" style="width: 100.0%; height: 100.0%;">SCATS ID: 2820<br>Location: EARL_ST SE of PRINCESS_ST</div>`)[0];
-                popup_f85fc5a85eb32ef5fd5cbf3a6748cb00.setContent(html_f5d0a638c7df211f9625fa57a910a894);
-            
-        
-
-        marker_fbd788074d7be8b07aa0b89cd321e316.bindPopup(popup_f85fc5a85eb32ef5fd5cbf3a6748cb00)
-        ;
-
-        
-    
-    
-            marker_fbd788074d7be8b07aa0b89cd321e316.bindTooltip(
-                `<div>
-                     SCATS ID: 2820
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_c0295e68ae32e262455121cdc431d4c1 = L.marker(
-                [-37.78661, 145.06202],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_cea36bc743431e02a3eb9702256d648c = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_cf13036c8b0a8a2ad29b446d97cd9c43 = $(`<div id="html_cf13036c8b0a8a2ad29b446d97cd9c43" style="width: 100.0%; height: 100.0%;">SCATS ID: 2825<br>Location: BURKE_RD S of EASTERN_FWY</div>`)[0];
-                popup_cea36bc743431e02a3eb9702256d648c.setContent(html_cf13036c8b0a8a2ad29b446d97cd9c43);
-            
-        
-
-        marker_c0295e68ae32e262455121cdc431d4c1.bindPopup(popup_cea36bc743431e02a3eb9702256d648c)
-        ;
-
-        
-    
-    
-            marker_c0295e68ae32e262455121cdc431d4c1.bindTooltip(
-                `<div>
-                     SCATS ID: 2825
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_a65a238b0efb7a5327b11d704df3f0aa = L.marker(
-                [-37.78093, 145.07733],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_0a5876ef146cc793f6789804a83cbb00 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_6122fc06bb6106015484cba4fd4766bb = $(`<div id="html_6122fc06bb6106015484cba4fd4766bb" style="width: 100.0%; height: 100.0%;">SCATS ID: 2827<br>Location: BULLEEN_RD N of THOMPSONS_RD</div>`)[0];
-                popup_0a5876ef146cc793f6789804a83cbb00.setContent(html_6122fc06bb6106015484cba4fd4766bb);
-            
-        
-
-        marker_a65a238b0efb7a5327b11d704df3f0aa.bindPopup(popup_0a5876ef146cc793f6789804a83cbb00)
-        ;
-
-        
-    
-    
-            marker_a65a238b0efb7a5327b11d704df3f0aa.bindTooltip(
-                `<div>
-                     SCATS ID: 2827
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_eb758cfe0b2296ceda0db2c9f29e77ce = L.marker(
-                [-37.8612671, 145.058038],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_1abf5189080dfba25339cad29e9c5977 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_97814f7357aa001fb0030fb327e1f8ae = $(`<div id="html_97814f7357aa001fb0030fb327e1f8ae" style="width: 100.0%; height: 100.0%;">SCATS ID: 2846<br>Location: S.E.ARTERIAL N OF HIGH_ST</div>`)[0];
-                popup_1abf5189080dfba25339cad29e9c5977.setContent(html_97814f7357aa001fb0030fb327e1f8ae);
-            
-        
-
-        marker_eb758cfe0b2296ceda0db2c9f29e77ce.bindPopup(popup_1abf5189080dfba25339cad29e9c5977)
-        ;
-
-        
-    
-    
-            marker_eb758cfe0b2296ceda0db2c9f29e77ce.bindTooltip(
-                `<div>
-                     SCATS ID: 2846
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_28261df42804551a58b18636eaa96749 = L.marker(
-                [-37.81441, 145.02243],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_6908ca5ff680afe42d77ba9dbf67d873 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_333672e392912bc6f5e652991cc07649 = $(`<div id="html_333672e392912bc6f5e652991cc07649" style="width: 100.0%; height: 100.0%;">SCATS ID: 3001<br>Location: HIGH_ST NE of BARKERS_RD</div>`)[0];
-                popup_6908ca5ff680afe42d77ba9dbf67d873.setContent(html_333672e392912bc6f5e652991cc07649);
-            
-        
-
-        marker_28261df42804551a58b18636eaa96749.bindPopup(popup_6908ca5ff680afe42d77ba9dbf67d873)
-        ;
-
-        
-    
-    
-            marker_28261df42804551a58b18636eaa96749.bindTooltip(
-                `<div>
-                     SCATS ID: 3001
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_a9130188216c70b257929e102e8c7be5 = L.marker(
-                [-37.81489, 145.02663],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_7281ad9463a7906c10f34b8840117bbc = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_92c6cfad5ec90e207d0e60b4250b0a95 = $(`<div id="html_92c6cfad5ec90e207d0e60b4250b0a95" style="width: 100.0%; height: 100.0%;">SCATS ID: 3002<br>Location: DENMARK_ST N of BARKERS_RD</div>`)[0];
-                popup_7281ad9463a7906c10f34b8840117bbc.setContent(html_92c6cfad5ec90e207d0e60b4250b0a95);
-            
-        
-
-        marker_a9130188216c70b257929e102e8c7be5.bindPopup(popup_7281ad9463a7906c10f34b8840117bbc)
-        ;
-
-        
-    
-    
-            marker_a9130188216c70b257929e102e8c7be5.bindTooltip(
-                `<div>
-                     SCATS ID: 3002
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_4ca253b4006ffaac93f726437e8b03c9 = L.marker(
-                [-37.82264, 145.05734],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_aead28c9d7b261f897cb65d98a6b9715 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_e1a7772887f6e65fe7d88d4bf1f8a73c = $(`<div id="html_e1a7772887f6e65fe7d88d4bf1f8a73c" style="width: 100.0%; height: 100.0%;">SCATS ID: 3120<br>Location: BURKE_RD N of CANTERBURY_RD</div>`)[0];
-                popup_aead28c9d7b261f897cb65d98a6b9715.setContent(html_e1a7772887f6e65fe7d88d4bf1f8a73c);
-            
-        
-
-        marker_4ca253b4006ffaac93f726437e8b03c9.bindPopup(popup_aead28c9d7b261f897cb65d98a6b9715)
-        ;
-
-        
-    
-    
-            marker_4ca253b4006ffaac93f726437e8b03c9.bindTooltip(
-                `<div>
-                     SCATS ID: 3120
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_ba5a184cfd5e55d6a279a4a738aef79f = L.marker(
-                [-37.82379, 145.06466],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_0791e162c5ae1bb81d0957baf66f7d23 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_1158ddfb1f0c226f220b91c6752d24ae = $(`<div id="html_1158ddfb1f0c226f220b91c6752d24ae" style="width: 100.0%; height: 100.0%;">SCATS ID: 3122<br>Location: CANTERBURY_RD E of STANHOPE_GV</div>`)[0];
-                popup_0791e162c5ae1bb81d0957baf66f7d23.setContent(html_1158ddfb1f0c226f220b91c6752d24ae);
-            
-        
-
-        marker_ba5a184cfd5e55d6a279a4a738aef79f.bindPopup(popup_0791e162c5ae1bb81d0957baf66f7d23)
-        ;
-
-        
-    
-    
-            marker_ba5a184cfd5e55d6a279a4a738aef79f.bindTooltip(
-                `<div>
-                     SCATS ID: 3122
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_ecf4187271dac0707cdba092735e9ccc = L.marker(
-                [-37.82778, 145.09885],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_3ef390fa6323472bb2a7f4db17a1ea70 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_8b8872c39b53c14c7b0f0ec48afb0247 = $(`<div id="html_8b8872c39b53c14c7b0f0ec48afb0247" style="width: 100.0%; height: 100.0%;">SCATS ID: 3126<br>Location: CANTERBURY_RD E of WARRIGAL_RD</div>`)[0];
-                popup_3ef390fa6323472bb2a7f4db17a1ea70.setContent(html_8b8872c39b53c14c7b0f0ec48afb0247);
-            
-        
-
-        marker_ecf4187271dac0707cdba092735e9ccc.bindPopup(popup_3ef390fa6323472bb2a7f4db17a1ea70)
-        ;
-
-        
-    
-    
-            marker_ecf4187271dac0707cdba092735e9ccc.bindTooltip(
-                `<div>
-                     SCATS ID: 3126
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_362f353fc08436f6667f853810ad1728 = L.marker(
-                [-37.82506, 145.078],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_637d3b694e2e6eb84915a3e5fc4adc7e = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_cf61beda3682f0b70842c0a298819679 = $(`<div id="html_cf61beda3682f0b70842c0a298819679" style="width: 100.0%; height: 100.0%;">SCATS ID: 3127<br>Location: BALWYN_RD N of CANTERBURY_RD</div>`)[0];
-                popup_637d3b694e2e6eb84915a3e5fc4adc7e.setContent(html_cf61beda3682f0b70842c0a298819679);
-            
-        
-
-        marker_362f353fc08436f6667f853810ad1728.bindPopup(popup_637d3b694e2e6eb84915a3e5fc4adc7e)
-        ;
-
-        
-    
-    
-            marker_362f353fc08436f6667f853810ad1728.bindTooltip(
-                `<div>
-                     SCATS ID: 3127
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_601c1446a182472ed56c3568468de7bf = L.marker(
-                [-37.79611, 145.08372],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_38e8807bbf7bb37043924d2eb6d2b6da = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_d9520bca5c250f1b3b3b2da828ce3d07 = $(`<div id="html_d9520bca5c250f1b3b3b2da828ce3d07" style="width: 100.0%; height: 100.0%;">SCATS ID: 3180<br>Location: DONCASTER_RD E of BALWYN_RD</div>`)[0];
-                popup_38e8807bbf7bb37043924d2eb6d2b6da.setContent(html_d9520bca5c250f1b3b3b2da828ce3d07);
-            
-        
-
-        marker_601c1446a182472ed56c3568468de7bf.bindPopup(popup_38e8807bbf7bb37043924d2eb6d2b6da)
-        ;
-
-        
-    
-    
-            marker_601c1446a182472ed56c3568468de7bf.bindTooltip(
-                `<div>
-                     SCATS ID: 3180
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_6736deb252fb5666f675e3dc5db97fee = L.marker(
-                [-37.80876, 145.02757],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_9142f19aaa9cfd84285cbec30f6508f8 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_bfc4707c44780e5ffff405f6f1774b8e = $(`<div id="html_bfc4707c44780e5ffff405f6f1774b8e" style="width: 100.0%; height: 100.0%;">SCATS ID: 3662<br>Location: PRINCESS_ST N of HIGH_ST</div>`)[0];
-                popup_9142f19aaa9cfd84285cbec30f6508f8.setContent(html_bfc4707c44780e5ffff405f6f1774b8e);
-            
-        
-
-        marker_6736deb252fb5666f675e3dc5db97fee.bindPopup(popup_9142f19aaa9cfd84285cbec30f6508f8)
-        ;
-
-        
-    
-    
-            marker_6736deb252fb5666f675e3dc5db97fee.bindTooltip(
-                `<div>
-                     SCATS ID: 3662
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_72a882ea0c8511c3f4ed8ef1813953d8 = L.marker(
-                [-37.83695, 145.09699],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_4fa4e608ee48c8360193975a3b923987 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_0a86450e9ac41fdba24864bc9fd66e49 = $(`<div id="html_0a86450e9ac41fdba24864bc9fd66e49" style="width: 100.0%; height: 100.0%;">SCATS ID: 3682<br>Location: WARRIGAL_RD N OF RIVERSDALE_RD</div>`)[0];
-                popup_4fa4e608ee48c8360193975a3b923987.setContent(html_0a86450e9ac41fdba24864bc9fd66e49);
-            
-        
-
-        marker_72a882ea0c8511c3f4ed8ef1813953d8.bindPopup(popup_4fa4e608ee48c8360193975a3b923987)
-        ;
-
-        
-    
-    
-            marker_72a882ea0c8511c3f4ed8ef1813953d8.bindTooltip(
-                `<div>
-                     SCATS ID: 3682
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_a93d2f9390f834d0d8c8192f5f916408 = L.marker(
-                [-37.85467, 145.09384],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_6b7bf2c577d62bb061227f4847e4ee2f = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_f5db5b89ede9eff59c542a9d71df5b1d = $(`<div id="html_f5db5b89ede9eff59c542a9d71df5b1d" style="width: 100.0%; height: 100.0%;">SCATS ID: 3685<br>Location: WARRIGAL_RD N of HIGHBURY_RD</div>`)[0];
-                popup_6b7bf2c577d62bb061227f4847e4ee2f.setContent(html_f5db5b89ede9eff59c542a9d71df5b1d);
-            
-        
-
-        marker_a93d2f9390f834d0d8c8192f5f916408.bindPopup(popup_6b7bf2c577d62bb061227f4847e4ee2f)
-        ;
-
-        
-    
-    
-            marker_a93d2f9390f834d0d8c8192f5f916408.bindTooltip(
-                `<div>
-                     SCATS ID: 3685
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_0c10c4b7934cb7cd20b223c888bcbaa6 = L.marker(
-                [-37.83331, 145.06247],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_a8b1739383fe924817eb7638feec77d1 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_4d69214efb061ce9a5ca172d473dd8fe = $(`<div id="html_4d69214efb061ce9a5ca172d473dd8fe" style="width: 100.0%; height: 100.0%;">SCATS ID: 3804<br>Location: TRAFALGAR_RD N of RIVERSDALE_RD</div>`)[0];
-                popup_a8b1739383fe924817eb7638feec77d1.setContent(html_4d69214efb061ce9a5ca172d473dd8fe);
-            
-        
-
-        marker_0c10c4b7934cb7cd20b223c888bcbaa6.bindPopup(popup_a8b1739383fe924817eb7638feec77d1)
-        ;
-
-        
-    
-    
-            marker_0c10c4b7934cb7cd20b223c888bcbaa6.bindTooltip(
-                `<div>
-                     SCATS ID: 3804
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_08bba56007a03b1f1bce6d27a15fe7c6 = L.marker(
-                [-37.83738, 145.06119],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_a1db45d948ea158904dea43b730e7780 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_f61b866011d523bdc11a6cf133f8a12e = $(`<div id="html_f61b866011d523bdc11a6cf133f8a12e" style="width: 100.0%; height: 100.0%;">SCATS ID: 3812<br>Location: TRAFALGAR_RD NE of CAMBERWELL_RD</div>`)[0];
-                popup_a1db45d948ea158904dea43b730e7780.setContent(html_f61b866011d523bdc11a6cf133f8a12e);
-            
-        
-
-        marker_08bba56007a03b1f1bce6d27a15fe7c6.bindPopup(popup_a1db45d948ea158904dea43b730e7780)
-        ;
-
-        
-    
-    
-            marker_08bba56007a03b1f1bce6d27a15fe7c6.bindTooltip(
-                `<div>
-                     SCATS ID: 3812
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_40c52aae1b374ee1c129cfe3d018d896 = L.marker(
-                [-37.79561, 145.06251],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_f005c5657724bd7097e75470adb921c9 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_1ef1a68ab4f0dbf9534fe0c749e9e02d = $(`<div id="html_1ef1a68ab4f0dbf9534fe0c749e9e02d" style="width: 100.0%; height: 100.0%;">SCATS ID: 4030<br>Location: BURKE_RD S of DONCASTER_RD</div>`)[0];
-                popup_f005c5657724bd7097e75470adb921c9.setContent(html_1ef1a68ab4f0dbf9534fe0c749e9e02d);
-            
-        
-
-        marker_40c52aae1b374ee1c129cfe3d018d896.bindPopup(popup_f005c5657724bd7097e75470adb921c9)
-        ;
-
-        
-    
-    
-            marker_40c52aae1b374ee1c129cfe3d018d896.bindTooltip(
-                `<div>
-                     SCATS ID: 4030
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_dcea31883516c59dd791e8b3889b02e7 = L.marker(
-                [-37.80202, 145.06127],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_6dfbda2d73d8a6418adfbd10d0c4beb6 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_e21bc80c48cac92500e8a3306cf03b19 = $(`<div id="html_e21bc80c48cac92500e8a3306cf03b19" style="width: 100.0%; height: 100.0%;">SCATS ID: 4032<br>Location: BURKE_RD N of HARP_RD</div>`)[0];
-                popup_6dfbda2d73d8a6418adfbd10d0c4beb6.setContent(html_e21bc80c48cac92500e8a3306cf03b19);
-            
-        
-
-        marker_dcea31883516c59dd791e8b3889b02e7.bindPopup(popup_6dfbda2d73d8a6418adfbd10d0c4beb6)
-        ;
-
-        
-    
-    
-            marker_dcea31883516c59dd791e8b3889b02e7.bindTooltip(
-                `<div>
-                     SCATS ID: 4032
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_fa13587b380679ef0d90109fe440c019 = L.marker(
-                [-37.81147, 145.05946],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_85c50a02d2539eeda02a326f750ae3c4 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_37761d549d2af99e02057198a7b90c00 = $(`<div id="html_37761d549d2af99e02057198a7b90c00" style="width: 100.0%; height: 100.0%;">SCATS ID: 4034<br>Location: BURKE_RD N OF WHITEHORSE_RD</div>`)[0];
-                popup_85c50a02d2539eeda02a326f750ae3c4.setContent(html_37761d549d2af99e02057198a7b90c00);
-            
-        
-
-        marker_fa13587b380679ef0d90109fe440c019.bindPopup(popup_85c50a02d2539eeda02a326f750ae3c4)
-        ;
-
-        
-    
-    
-            marker_fa13587b380679ef0d90109fe440c019.bindTooltip(
-                `<div>
-                     SCATS ID: 4034
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_92cdcf9dca89ee6b0a3e66de20db8366 = L.marker(
-                [-37.8172654, 145.0583603],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_4df51f90f4e7b75735bbfbbc86a65323 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_481e2e755855b2d9b75385b5bafafd99 = $(`<div id="html_481e2e755855b2d9b75385b5bafafd99" style="width: 100.0%; height: 100.0%;">SCATS ID: 4035<br>Location: BURKE_RD N of MONT ALBERT_RD</div>`)[0];
-                popup_4df51f90f4e7b75735bbfbbc86a65323.setContent(html_481e2e755855b2d9b75385b5bafafd99);
-            
-        
-
-        marker_92cdcf9dca89ee6b0a3e66de20db8366.bindPopup(popup_4df51f90f4e7b75735bbfbbc86a65323)
-        ;
-
-        
-    
-    
-            marker_92cdcf9dca89ee6b0a3e66de20db8366.bindTooltip(
-                `<div>
-                     SCATS ID: 4035
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_3fe13ac737af20cb08b61e7dcd0ef2ad = L.marker(
-                [-37.83256, 145.05545],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_41386d7937a219af66ef0fbb9445b09f = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_0d3c63f3d7931fd31abe3c85506f8afb = $(`<div id="html_0d3c63f3d7931fd31abe3c85506f8afb" style="width: 100.0%; height: 100.0%;">SCATS ID: 4040<br>Location: BURKE_RD N of RIVERSDALE_RD</div>`)[0];
-                popup_41386d7937a219af66ef0fbb9445b09f.setContent(html_0d3c63f3d7931fd31abe3c85506f8afb);
-            
-        
-
-        marker_3fe13ac737af20cb08b61e7dcd0ef2ad.bindPopup(popup_41386d7937a219af66ef0fbb9445b09f)
-        ;
-
-        
-    
-    
-            marker_3fe13ac737af20cb08b61e7dcd0ef2ad.bindTooltip(
-                `<div>
-                     SCATS ID: 4040
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_dce3ab8bb613cf74f165a568bb742884 = L.marker(
-                [-37.84683, 145.05275],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_9276f5a487473edea287bec1df766177 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_af83ecf50058665bb763629a8b526b90 = $(`<div id="html_af83ecf50058665bb763629a8b526b90" style="width: 100.0%; height: 100.0%;">SCATS ID: 4043<br>Location: BURKE_RD N of TOORAK_RD</div>`)[0];
-                popup_9276f5a487473edea287bec1df766177.setContent(html_af83ecf50058665bb763629a8b526b90);
-            
-        
-
-        marker_dce3ab8bb613cf74f165a568bb742884.bindPopup(popup_9276f5a487473edea287bec1df766177)
-        ;
-
-        
-    
-    
-            marker_dce3ab8bb613cf74f165a568bb742884.bindTooltip(
-                `<div>
-                     SCATS ID: 4043
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_ab335c10c96862c668a6d62614426e94 = L.marker(
-                [-37.79419, 145.0696],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_f7cefc7c7832ed19e438eba0eb6a7056 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_d7d30d4122911ac5421da8ac6e7d3701 = $(`<div id="html_d7d30d4122911ac5421da8ac6e7d3701" style="width: 100.0%; height: 100.0%;">SCATS ID: 4051<br>Location: DONCASTER_RD E of BULLEEN_RD</div>`)[0];
-                popup_f7cefc7c7832ed19e438eba0eb6a7056.setContent(html_d7d30d4122911ac5421da8ac6e7d3701);
-            
-        
-
-        marker_ab335c10c96862c668a6d62614426e94.bindPopup(popup_f7cefc7c7832ed19e438eba0eb6a7056)
-        ;
-
-        
-    
-    
-            marker_ab335c10c96862c668a6d62614426e94.bindTooltip(
-                `<div>
-                     SCATS ID: 4051
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_1a06c717f1a7661b6f6560816e5d6776 = L.marker(
-                [-37.80431, 145.08197],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_9304e409cfbf231682a63705bde52df2 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_5f105d322d976f0b19be3e9db47ec5b3 = $(`<div id="html_5f105d322d976f0b19be3e9db47ec5b3" style="width: 100.0%; height: 100.0%;">SCATS ID: 4057<br>Location: BALWYN_RD N OF BELMORE_RD</div>`)[0];
-                popup_9304e409cfbf231682a63705bde52df2.setContent(html_5f105d322d976f0b19be3e9db47ec5b3);
-            
-        
-
-        marker_1a06c717f1a7661b6f6560816e5d6776.bindPopup(popup_9304e409cfbf231682a63705bde52df2)
-        ;
-
-        
-    
-    
-            marker_1a06c717f1a7661b6f6560816e5d6776.bindTooltip(
-                `<div>
-                     SCATS ID: 4057
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_d6ff10371adcf2146e454d82e969aa05 = L.marker(
-                [-37.81404, 145.0801],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_34c20a097eee91528491b0e3ffb78e5c = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_5d9991251d6e01c856fd27b067175ae3 = $(`<div id="html_5d9991251d6e01c856fd27b067175ae3" style="width: 100.0%; height: 100.0%;">SCATS ID: 4063<br>Location: BALWYN_RD N OF WHITEHORSE_RD</div>`)[0];
-                popup_34c20a097eee91528491b0e3ffb78e5c.setContent(html_5d9991251d6e01c856fd27b067175ae3);
-            
-        
-
-        marker_d6ff10371adcf2146e454d82e969aa05.bindPopup(popup_34c20a097eee91528491b0e3ffb78e5c)
-        ;
-
-        
-    
-    
-            marker_d6ff10371adcf2146e454d82e969aa05.bindTooltip(
-                `<div>
-                     SCATS ID: 4063
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_52995c4aff73236078a69c448fd9fd86 = L.marker(
-                [-37.82155, 145.01503],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_041e768ff5da601f648a5f47658d4000 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_67b0455f0a1147340b668aa079b78879 = $(`<div id="html_67b0455f0a1147340b668aa079b78879" style="width: 100.0%; height: 100.0%;">SCATS ID: 4262<br>Location: BRIDGE_RD SW of BURWOOD_RD</div>`)[0];
-                popup_041e768ff5da601f648a5f47658d4000.setContent(html_67b0455f0a1147340b668aa079b78879);
-            
-        
-
-        marker_52995c4aff73236078a69c448fd9fd86.bindPopup(popup_041e768ff5da601f648a5f47658d4000)
-        ;
-
-        
-    
-    
-            marker_52995c4aff73236078a69c448fd9fd86.bindTooltip(
-                `<div>
-                     SCATS ID: 4262
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_feef0d7f28e17d2dc15338e2e7965f49 = L.marker(
-                [-37.8228462, 145.0251292],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_01edadcb9ae8649344f3f7669c7389b6 = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_03a1fce3f29c453c64f75fce9609c6b3 = $(`<div id="html_03a1fce3f29c453c64f75fce9609c6b3" style="width: 100.0%; height: 100.0%;">SCATS ID: 4263<br>Location: POWER_ST N of BURWOOD_RD</div>`)[0];
-                popup_01edadcb9ae8649344f3f7669c7389b6.setContent(html_03a1fce3f29c453c64f75fce9609c6b3);
-            
-        
-
-        marker_feef0d7f28e17d2dc15338e2e7965f49.bindPopup(popup_01edadcb9ae8649344f3f7669c7389b6)
-        ;
-
-        
-    
-    
-            marker_feef0d7f28e17d2dc15338e2e7965f49.bindTooltip(
-                `<div>
-                     SCATS ID: 4263
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_06be55f533b3dc425838cd42d0658c3c = L.marker(
-                [-37.82389, 145.03409],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_56e7393d340306aeb0ea4953a137946b = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_ea9702047ddb7cc07abd90ccc3abcf9a = $(`<div id="html_ea9702047ddb7cc07abd90ccc3abcf9a" style="width: 100.0%; height: 100.0%;">SCATS ID: 4264<br>Location: GLENFERRIE_RD N of BURWOOD_RD</div>`)[0];
-                popup_56e7393d340306aeb0ea4953a137946b.setContent(html_ea9702047ddb7cc07abd90ccc3abcf9a);
-            
-        
-
-        marker_06be55f533b3dc425838cd42d0658c3c.bindPopup(popup_56e7393d340306aeb0ea4953a137946b)
-        ;
-
-        
-    
-    
-            marker_06be55f533b3dc425838cd42d0658c3c.bindTooltip(
-                `<div>
-                     SCATS ID: 4264
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_8e4db235a890ffbea1afc3f2daeb87ce = L.marker(
+            var marker_860f302076be543d076bb69c174da5f6 = L.marker(
                 [0.0, 0.0],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
+                {}
+            ).addTo(map_22b7ca48b2849a9807a1cf0af3acc9cb);
         
     
-        var popup_9ac1b8b3ba76299075c6dfd116acda4b = L.popup({
-  "maxWidth": "100%",
-});
+        var popup_469acc951d654e2600ec351d65b8a0a0 = L.popup({"maxWidth": "100%"});
 
         
             
-                var html_2f6c86b62ddb10d2b9dc0fb1d35d46e4 = $(`<div id="html_2f6c86b62ddb10d2b9dc0fb1d35d46e4" style="width: 100.0%; height: 100.0%;">SCATS ID: 4266<br>Location: AUBURN_RD N of BURWOOD_RD</div>`)[0];
-                popup_9ac1b8b3ba76299075c6dfd116acda4b.setContent(html_2f6c86b62ddb10d2b9dc0fb1d35d46e4);
+                var html_587607f67da8c1aa169406ca01550d4a = $(`<div id="html_587607f67da8c1aa169406ca01550d4a" style="width: 100.0%; height: 100.0%;">ID: 1<br>Location: N/A</div>`)[0];
+                popup_469acc951d654e2600ec351d65b8a0a0.setContent(html_587607f67da8c1aa169406ca01550d4a);
             
         
 
-        marker_8e4db235a890ffbea1afc3f2daeb87ce.bindPopup(popup_9ac1b8b3ba76299075c6dfd116acda4b)
-        ;
+        marker_860f302076be543d076bb69c174da5f6.bindPopup(popup_469acc951d654e2600ec351d65b8a0a0);
 
         
     
     
-            marker_8e4db235a890ffbea1afc3f2daeb87ce.bindTooltip(
+            marker_860f302076be543d076bb69c174da5f6.bindTooltip(
                 `<div>
-                     SCATS ID: 4266
+                     ID: 1
                  </div>`,
-                {
-  "sticky": true,
-}
+                {"sticky": true}
             );
         
     
-            var marker_01309215771b74475c2c92b9cfaf5162 = L.marker(
-                [-37.82951, 145.03304],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
+            var marker_dc9d7b4704c0bf4ef345f63db3ab937a = L.marker(
+                [0.0, 0.0],
+                {}
+            ).addTo(map_22b7ca48b2849a9807a1cf0af3acc9cb);
         
     
-        var popup_ec5b98cc8c4da577071bf6d0e86a550f = L.popup({
-  "maxWidth": "100%",
-});
+        var popup_a29d8e1b5a5c3871e80abcd099405951 = L.popup({"maxWidth": "100%"});
 
         
             
-                var html_6f344060a7cd3862f6f17c597ed2adbb = $(`<div id="html_6f344060a7cd3862f6f17c597ed2adbb" style="width: 100.0%; height: 100.0%;">SCATS ID: 4270<br>Location: GLENFERRIE_RD N of RIVERSDALE_RD</div>`)[0];
-                popup_ec5b98cc8c4da577071bf6d0e86a550f.setContent(html_6f344060a7cd3862f6f17c597ed2adbb);
+                var html_8cb7ed8843e9168c4c0dc26840c4aafd = $(`<div id="html_8cb7ed8843e9168c4c0dc26840c4aafd" style="width: 100.0%; height: 100.0%;">ID: 2<br>Location: N/A</div>`)[0];
+                popup_a29d8e1b5a5c3871e80abcd099405951.setContent(html_8cb7ed8843e9168c4c0dc26840c4aafd);
             
         
 
-        marker_01309215771b74475c2c92b9cfaf5162.bindPopup(popup_ec5b98cc8c4da577071bf6d0e86a550f)
-        ;
+        marker_dc9d7b4704c0bf4ef345f63db3ab937a.bindPopup(popup_a29d8e1b5a5c3871e80abcd099405951);
 
         
     
     
-            marker_01309215771b74475c2c92b9cfaf5162.bindTooltip(
+            marker_dc9d7b4704c0bf4ef345f63db3ab937a.bindTooltip(
                 `<div>
-                     SCATS ID: 4270
+                     ID: 2
                  </div>`,
-                {
-  "sticky": true,
-}
+                {"sticky": true}
             );
         
     
-            var marker_eabfa18af30de54ebab0741663f3deff = L.marker(
-                [-37.83186, 145.04668],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
+            var marker_3e33096327c1773e948aa1dccacba008 = L.marker(
+                [0.0, 0.0],
+                {}
+            ).addTo(map_22b7ca48b2849a9807a1cf0af3acc9cb);
         
     
-        var popup_591848987b175a9907f91c5162865601 = L.popup({
-  "maxWidth": "100%",
-});
+        var popup_47d696a19a23df5bc568daf04f88487d = L.popup({"maxWidth": "100%"});
 
         
             
-                var html_7e19d1345b04d2d571020154f02be573 = $(`<div id="html_7e19d1345b04d2d571020154f02be573" style="width: 100.0%; height: 100.0%;">SCATS ID: 4272<br>Location: RIVERSDALE_RD E of TOORONGA_RD</div>`)[0];
-                popup_591848987b175a9907f91c5162865601.setContent(html_7e19d1345b04d2d571020154f02be573);
+                var html_701ad38f0ea666b1d6f7d7b774de96e2 = $(`<div id="html_701ad38f0ea666b1d6f7d7b774de96e2" style="width: 100.0%; height: 100.0%;">ID: 3<br>Location: N/A</div>`)[0];
+                popup_47d696a19a23df5bc568daf04f88487d.setContent(html_701ad38f0ea666b1d6f7d7b774de96e2);
             
         
 
-        marker_eabfa18af30de54ebab0741663f3deff.bindPopup(popup_591848987b175a9907f91c5162865601)
-        ;
+        marker_3e33096327c1773e948aa1dccacba008.bindPopup(popup_47d696a19a23df5bc568daf04f88487d);
 
         
     
     
-            marker_eabfa18af30de54ebab0741663f3deff.bindTooltip(
+            marker_3e33096327c1773e948aa1dccacba008.bindTooltip(
                 `<div>
-                     SCATS ID: 4272
+                     ID: 3
                  </div>`,
-                {
-  "sticky": true,
-}
+                {"sticky": true}
             );
         
     
-            var marker_55deac9f403959e63cce199efdd33789 = L.marker(
-                [-37.84632, 145.04378],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
+            var marker_abd6cd25d4ec38862a006a75e1c3c818 = L.marker(
+                [0.0, 0.0],
+                {}
+            ).addTo(map_22b7ca48b2849a9807a1cf0af3acc9cb);
         
     
-        var popup_b830bcc35dfcb88609470bd765bf8291 = L.popup({
-  "maxWidth": "100%",
-});
+        var popup_caf0a829ce83c6b32bd3fa96ffcfc602 = L.popup({"maxWidth": "100%"});
 
         
             
-                var html_a0700a7ef1a921e3eb50502b4ab730cd = $(`<div id="html_a0700a7ef1a921e3eb50502b4ab730cd" style="width: 100.0%; height: 100.0%;">SCATS ID: 4273<br>Location: TOORONGA_RD N of TOORAK_RD</div>`)[0];
-                popup_b830bcc35dfcb88609470bd765bf8291.setContent(html_a0700a7ef1a921e3eb50502b4ab730cd);
+                var html_132ec4cbe74b85d957c2e82c71fe04eb = $(`<div id="html_132ec4cbe74b85d957c2e82c71fe04eb" style="width: 100.0%; height: 100.0%;">ID: 4<br>Location: N/A</div>`)[0];
+                popup_caf0a829ce83c6b32bd3fa96ffcfc602.setContent(html_132ec4cbe74b85d957c2e82c71fe04eb);
             
         
 
-        marker_55deac9f403959e63cce199efdd33789.bindPopup(popup_b830bcc35dfcb88609470bd765bf8291)
-        ;
+        marker_abd6cd25d4ec38862a006a75e1c3c818.bindPopup(popup_caf0a829ce83c6b32bd3fa96ffcfc602);
 
         
     
     
-            marker_55deac9f403959e63cce199efdd33789.bindTooltip(
+            marker_abd6cd25d4ec38862a006a75e1c3c818.bindTooltip(
                 `<div>
-                     SCATS ID: 4273
+                     ID: 4
                  </div>`,
-                {
-  "sticky": true,
-}
+                {"sticky": true}
             );
         
-    
-            var marker_f0944fc9e834bef8d56db78e4efe8a3a = L.marker(
-                [-37.800776, 145.0494611],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_2b44a1bc0ae36a8194772e66879414be = L.popup({
-  "maxWidth": "100%",
-});
+        // --- NEW: JavaScript to show notification if no location data is available ---
+        document.addEventListener('DOMContentLoaded', function() {
+            var mapCenter = map_22b7ca48b2849a9807a1cf0af3acc9cb.getCenter();
+            if (mapCenter.lat === 0.0 && mapCenter.lng === 0.0) {
+                // Check if all markers are at the default position
+                var allMarkersDefault = true;
+                map_22b7ca48b2849a9807a1cf0af3acc9cb.eachLayer(function (layer) {
+                    if (layer instanceof L.Marker) {
+                        var latlng = layer.getLatLng();
+                        if (latlng.lat !== 0.0 || latlng.lng !== 0.0) {
+                            allMarkersDefault = false;
+                        }
+                    }
+                });
 
-        
-            
-                var html_2713f1457a2fa6b1dedd9f4999b14524 = $(`<div id="html_2713f1457a2fa6b1dedd9f4999b14524" style="width: 100.0%; height: 100.0%;">SCATS ID: 4321<br>Location: HIGH_ST NE OF HARP_ST</div>`)[0];
-                popup_2b44a1bc0ae36a8194772e66879414be.setContent(html_2713f1457a2fa6b1dedd9f4999b14524);
-            
-        
-
-        marker_f0944fc9e834bef8d56db78e4efe8a3a.bindPopup(popup_2b44a1bc0ae36a8194772e66879414be)
-        ;
-
-        
-    
-    
-            marker_f0944fc9e834bef8d56db78e4efe8a3a.bindTooltip(
-                `<div>
-                     SCATS ID: 4321
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_8474b746a24d702f2e0bcb23ad897c8a = L.marker(
-                [-37.809274, 145.037306],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_110468431291e9d0ba9a5b960af75e2a = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_86e32031b90e9127a8e9698800ea5ed1 = $(`<div id="html_86e32031b90e9127a8e9698800ea5ed1" style="width: 100.0%; height: 100.0%;">SCATS ID: 4324<br>Location: COTHAM_RD E OF GLENFERRIE_RD</div>`)[0];
-                popup_110468431291e9d0ba9a5b960af75e2a.setContent(html_86e32031b90e9127a8e9698800ea5ed1);
-            
-        
-
-        marker_8474b746a24d702f2e0bcb23ad897c8a.bindPopup(popup_110468431291e9d0ba9a5b960af75e2a)
-        ;
-
-        
-    
-    
-            marker_8474b746a24d702f2e0bcb23ad897c8a.bindTooltip(
-                `<div>
-                     SCATS ID: 4324
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_dcbd0b641e8866a904cd4064196fbe44 = L.marker(
-                [-37.80624, 145.03518],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_b3fdfa1687f3e468f831c258460d915e = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_b3b93af4a0269113f84c2fdcb767d47a = $(`<div id="html_b3b93af4a0269113f84c2fdcb767d47a" style="width: 100.0%; height: 100.0%;">SCATS ID: 4335<br>Location: HIGH_ST NE of CHARLES_ST</div>`)[0];
-                popup_b3fdfa1687f3e468f831c258460d915e.setContent(html_b3b93af4a0269113f84c2fdcb767d47a);
-            
-        
-
-        marker_dcbd0b641e8866a904cd4064196fbe44.bindPopup(popup_b3fdfa1687f3e468f831c258460d915e)
-        ;
-
-        
-    
-    
-            marker_dcbd0b641e8866a904cd4064196fbe44.bindTooltip(
-                `<div>
-                     SCATS ID: 4335
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_19365a5cd1659fe1a20cf6cd1d874c07 = L.marker(
-                [-37.82859, 145.01644],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_825b585450fa703d2d07d6d3acadea7c = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_504bdfc2c3c3297b75942eac6b5c9472 = $(`<div id="html_504bdfc2c3c3297b75942eac6b5c9472" style="width: 100.0%; height: 100.0%;">SCATS ID: 4812<br>Location: SWAN_ST NE of MADDEN_GV</div>`)[0];
-                popup_825b585450fa703d2d07d6d3acadea7c.setContent(html_504bdfc2c3c3297b75942eac6b5c9472);
-            
-        
-
-        marker_19365a5cd1659fe1a20cf6cd1d874c07.bindPopup(popup_825b585450fa703d2d07d6d3acadea7c)
-        ;
-
-        
-    
-    
-            marker_19365a5cd1659fe1a20cf6cd1d874c07.bindTooltip(
-                `<div>
-                     SCATS ID: 4812
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
-    
-            var marker_ad5c63e9e49fb4898fb68fb66ca80e1f = L.marker(
-                [-37.81285, 145.00849],
-                {
-}
-            ).addTo(map_9ff712beac20f6382dbf8a62b21e288d);
-        
-    
-        var popup_f83230cd71048d3510d2cb88f6cc7a5f = L.popup({
-  "maxWidth": "100%",
-});
-
-        
-            
-                var html_9fdfa8e14f9554dde7a45f9616156e5c = $(`<div id="html_9fdfa8e14f9554dde7a45f9616156e5c" style="width: 100.0%; height: 100.0%;">SCATS ID: 4821<br>Location: WALMER_ST N OF VICTORIA_ST</div>`)[0];
-                popup_f83230cd71048d3510d2cb88f6cc7a5f.setContent(html_9fdfa8e14f9554dde7a45f9616156e5c);
-            
-        
-
-        marker_ad5c63e9e49fb4898fb68fb66ca80e1f.bindPopup(popup_f83230cd71048d3510d2cb88f6cc7a5f)
-        ;
-
-        
-    
-    
-            marker_ad5c63e9e49fb4898fb68fb66ca80e1f.bindTooltip(
-                `<div>
-                     SCATS ID: 4821
-                 </div>`,
-                {
-  "sticky": true,
-}
-            );
-        
+                if(allMarkersDefault) {
+                    document.getElementById('notification-banner').style.display = 'block';
+                }
+            }
+        });
 </script>
 </html>
