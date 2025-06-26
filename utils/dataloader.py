@@ -28,6 +28,7 @@ class TrafficDataLoader:
         self.df_raw.rename(columns=rename_dict, inplace=True)
         
         # Check if the data is in "long" format (like the new test file)
+        # A simple heuristic: if there's only one volume column mapped, it's long format.
         if len(self.mapping['volume_columns']) == 1:
             self.is_long_format = True
             # For long format, the single volume column needs to be renamed internally
@@ -39,7 +40,9 @@ class TrafficDataLoader:
         """Processes data that is already in a long format."""
         print("Processing long-format data.")
         self.df_processed = self.df_raw.copy()
+        # The 'date' column in long format might be a full datetime column
         self.df_processed['Date_Time'] = pd.to_datetime(self.df_processed['date'], errors='coerce')
+        # Drop rows where datetime parsing failed
         self.df_processed.dropna(subset=['Date_Time'], inplace=True)
         # Ensure Traffic_Volume is numeric
         if 'Traffic_Volume' in self.df_processed.columns:
@@ -97,9 +100,7 @@ class TrafficDataLoader:
         """Prepares the final data for the model, ensuring consistent feature sets."""
         if self.df_final is None: raise ValueError("Features not engineered.")
 
-        # --- FIX: Ensure optional spatial columns exist before creating the feature list ---
-        # If the user did not map latitude or longitude, create dummy columns with 0.
-        # This ensures the model always gets a column for them, even if it's just placeholder data.
+        # Ensure optional spatial columns exist before creating the feature list
         for col in ['latitude', 'longitude', 'location']:
              if col not in self.df_final.columns:
                  self.df_final[col] = 0 if col != 'location' else 'N/A'
@@ -124,7 +125,6 @@ class TrafficDataLoader:
         features_to_scale = [col for col in X.columns if X[col].dtype in ['int64', 'float64', 'Int64']]
         self.scaler = MinMaxScaler()
         X_scaled = X.copy()
-        # Handle cases where a feature column might be all NaN after processing
         for col in features_to_scale:
             if X_scaled[col].isnull().all():
                 X_scaled[col].fillna(0, inplace=True)

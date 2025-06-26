@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Traffic Flow Prediction System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap & Leaflet CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #111827;
+            --sidebar-link-color: #9CA3AF;
+            --sidebar-link-hover-bg: #1F2937;
+            --sidebar-link-active-bg: #374151;
+            --sidebar-link-active-color: #FFFFFF;
+            --content-bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+        }
+        html, body { height: 100%; margin: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--content-bg); color: var(--text-primary); }
+        #main-wrapper { height: 100vh; }
+        #sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            padding: 0;
+            transition: margin-left 0.3s;
+        }
+        #sidebar .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #374151;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        #sidebar .nav-link {
+            color: var(--sidebar-link-color);
+            padding: 0.85rem 1.5rem;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        #sidebar .nav-link.active, #sidebar .nav-link:hover {
+            background: var(--sidebar-link-hover-bg);
+            color: var(--sidebar-link-active-color);
+            border-left-color: #4F46E5;
+        }
+        #content {
+            width: calc(100% - 280px);
+            padding: 2.5rem;
+            overflow-y: auto;
+        }
+        .card { 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border: none;
+            border-radius: 0.75rem;
+            background-color: var(--card-bg);
+        }
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+        }
+        .status-box {
+            background-color: #F3F4F6;
+            border-radius: .5rem;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            border: 1px solid #E5E7EB;
+        }
+        #map { height: 500px; width: 100%; border-radius: .5rem; border: 1px solid #E5E7EB; }
+        .spinner-border { display: none; }
+        .form-label { font-weight: 500; color: var(--text-primary); }
+    </style>
+</head>
+<body>
+
+<div class="d-flex" id="main-wrapper">
+    <!-- Sidebar -->
+    <div id="sidebar" class="d-flex flex-column flex-shrink-0">
+        <div class="sidebar-header text-center">
+            <span>TFPS</span>
+        </div>
+        <ul class="nav nav-pills flex-column mt-2" id="sidebarTabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-data" role="tab">Data Processing</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-train" role="tab">Model Training</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-predict" role="tab">Prediction & Map</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <div class="tab-content h-100">
+            <!-- Data Loading Tab -->
+            <div class="tab-pane fade show active" id="tab-data" role="tabpanel">
+                <h1 class="h2 mb-4">Data Loading & Preprocessing</h1>
+                 <div class="card">
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="dataFile" class="form-label">1. Upload Raw Data CSV</label>
+                                <input type="file" class="form-control" id="dataFile" accept=".csv">
+                            </div>
+                            <div class="col-md-7">
+                                <label for="headerRow" class="form-label">2. Specify Header Row (0-indexed)</label>
+                                <input type="number" class="form-control" id="headerRow" value="0" min="0">
+                            </div>
+                            <div class="col-md-5 d-flex align-items-end">
+                                <button class="btn btn-outline-primary w-100" id="mapColumnsBtn" disabled>
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    3. Map Columns
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-4 d-grid">
+                             <button class="btn btn-primary btn-lg" id="processBtn" disabled>
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                4. Load & Process Data
+                            </button>
+                        </div>
+                        <div id="dataStatus" class="status-box mt-3">Status: Please select a CSV file to begin.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Training Tab -->
+            <div class="tab-pane fade" id="tab-train" role="tabpanel">
+                <h1 class="h2 mb-4">Model Training</h1>
+                <div class="card">
+                    <div class="card-body p-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-8">
+                                <label for="modelSelect" class="form-label">Select Model</label>
+                                <select class="form-select" id="modelSelect">
+                                    <option value="lstm">LSTM (Long Short-Term Memory)</option>
+                                    <option value="sae">Stacked Autoencoder</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="epochs" class="form-label">Epochs</label>
+                                <input type="number" class="form-control" id="epochs" value="50" min="1">
+                            </div>
+                        </div>
+                         <div class="mt-4 d-grid">
+                            <button class="btn btn-success btn-lg" id="trainBtn">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Train Model
+                            </button>
+                        </div>
+                        <div id="trainStatus" class="status-box mt-3">Status: Ready to train.</div>
+                        <div class="mt-3"><canvas id="lossChart" style="max-height: 400px;"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Traffic Prediction Tab -->
+            <div class="tab-pane fade" id="tab-predict" role="tabpanel">
+                 <h1 class="h2 mb-4">Prediction & Visualization</h1>
+                 <div class="card">
+                    <div class="card-body p-4">
+                        <h5>Batch Prediction from CSV</h5>
+                        <p class="text-muted">Upload a CSV with the same structure as your training data.</p>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="predictFile" accept=".csv">
+                            <button class="btn btn-info text-white" id="predictBtn">
+                                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Upload & Predict
+                            </button>
+                        </div>
+                         <div id="predictStatus" class="status-box mt-3">Status: Awaiting prediction file.</div>
+                        <div class="row mt-4">
+                            <div class="col-lg-7">
+                                <h5>Results Map</h5>
+                                <div id="map"></div>
+                            </div>
+                            <div class="col-lg-5">
+                                <h5>Prediction Details</h5>
+                                <div id="predictionDetails" class="table-responsive" style="max-height: 460px;">
+                                    <div class="d-flex h-100 justify-content-center align-items-center">
+                                        <p class="text-muted">Prediction details will appear here.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Column Mapping Modal -->
+<div class="modal fade" id="mappingModal" tabindex="-1" aria-labelledby="mappingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mappingModalLabel">Map CSV Columns</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="mappingModalBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmMappingBtn">Confirm Mapping</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+$(document).ready(function() {
+    let columnMapping = null;
+    let lossChart = null;
+
+    let map = L.map('map').setView([-37.814, 144.963], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    $('a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+        if (e.target.href.includes('predict')) {
+            map.invalidateSize();
+        }
+    });
+    let mapMarkers = [];
+
+    $('#dataFile').on('change', function() {
+        if ($(this).val()) {
+            $('#mapColumnsBtn').prop('disabled', false);
+            $('#dataStatus').text('Status: File selected. Please specify header row and map columns.');
+        }
+    });
+
+    $('#mapColumnsBtn').on('click', function() {
+        let fileInput = $('#dataFile')[0];
+        if (!fileInput.files.length) return alert('Please select a file first.');
+        
+        let formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('header_row', $('#headerRow').val());
+        
+        showSpinner(this, true);
+        
+        $.ajax({
+            url: '/get-headers',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: response => {
+                populateMappingModal(response.headers);
+                const mappingModal = new bootstrap.Modal(document.getElementById('mappingModal'));
+                mappingModal.show();
+            },
+            error: xhr => alert('Error getting headers: ' + (xhr.responseJSON ? xhr.responseJSON.error : "Unknown error")),
+            complete: () => showSpinner('#mapColumnsBtn', false)
+        });
+    });
+
+    function populateMappingModal(headers) {
+        const requiredCols = {
+            'scats_number': 'SCATS Site ID / Junction',
+            'location': 'Location Name (Optional)',
+            'latitude': 'Latitude (Optional)',
+            'longitude': 'Longitude (Optional)',
+            'date': 'Date or DateTime',
+            'volume_columns': 'Traffic Volume Columns'
+        };
+        
+        let html = '<p>Please map your CSV columns to the required data fields.</p>';
+        Object.entries(requiredCols).forEach(([key, desc]) => {
+            if (key !== 'volume_columns') {
+                html += `<div class="row mb-2 align-items-center"><div class="col-sm-4"><label class="form-label fw-bold">${desc}:</label></div><div class="col-sm-8"><select class="form-select" id="map-${key}">`;
+                headers.forEach(h => {
+                    const saneKey = key.replace("_", " ").toLowerCase();
+                    const saneHeader = h.toLowerCase().trim();
+                    const isSelected = saneKey === saneHeader || (saneKey.includes('junction') && saneHeader.includes('junction')) || (saneKey.includes('date') && saneHeader.includes('date'));
+                    html += `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}</option>`;
+                });
+                html += '</select></div></div>';
+            }
+        });
+        
+        html += '<hr><div class="mb-2"><label class="form-label fw-bold">Traffic Volume Columns (select one or more):</label><select class="form-select" id="map-volume_columns" multiple size="8">';
+        headers.forEach(h => {
+             const isSelected = h.toLowerCase().trim().startsWith('v') || h.toLowerCase().includes('vehicle');
+             html += `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}</option>`;
+        });
+        html += '</select></div>';
+        $('#mappingModalBody').html(html);
+    }
+    
+    $('#confirmMappingBtn').on('click', function() {
+        columnMapping = {};
+        $('#mappingModalBody select').each(function() {
+            let id = $(this).attr('id').replace('map-', '');
+            let val = $(this).val();
+            if (val) columnMapping[id] = val;
+        });
+
+        if (!columnMapping.volume_columns || columnMapping.volume_columns.length === 0) {
+            return alert('You must select at least one Traffic Volume column.');
+        }
+
+        $('#processBtn').prop('disabled', false);
+        $('#dataStatus').text('Status: Columns mapped. Ready to load & process data.');
+        bootstrap.Modal.getInstance($('#mappingModal')).hide();
+    });
+
+    $('#processBtn').on('click', function() {
+        if (!$('#dataFile')[0].files.length || !columnMapping) return alert('Please select a file and map columns.');
+
+        let formData = new FormData();
+        formData.append('file', $('#dataFile')[0].files[0]);
+        formData.append('header_row', $('#headerRow').val());
+        formData.append('column_mapping', JSON.stringify(columnMapping));
+        
+        showSpinner(this, true);
+        $('#dataStatus').text('Status: Uploading and preprocessing... This may take a moment.');
+
+        $.ajax({
+            url: '/preprocess',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: response => $('#dataStatus').html(`<span class="text-success">Preprocessing completed! ${response.rows_processed} rows processed. You can now train a model.</span>`),
+            error: xhr => $('#dataStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON ? xhr.responseJSON.error : 'An unknown error occurred'}</span>`),
+            complete: () => showSpinner('#processBtn', false)
+        });
+    });
+
+    $('#trainBtn').on('click', function() {
+        showSpinner(this, true);
+        $('#trainStatus').text(`Status: Training ${$('#modelSelect').val().toUpperCase()} model...`);
+
+        $.ajax({
+            url: '/train',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ model: $('#modelSelect').val(), epochs: $('#epochs').val() }),
+            success: response => $('#trainStatus').html(`<span class="text-success">${response.message}</span>`),
+            error: xhr => $('#trainStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON ? xhr.responseJSON.error : 'An unknown error occurred'}</span>`),
+            complete: () => showSpinner('#trainBtn', false)
+        });
+    });
+
+    $('#predictBtn').on('click', function() {
+        let fileInput = $('#predictFile')[0];
+        if (!fileInput.files.length) return alert('Please select a file for prediction.');
+
+        let formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        showSpinner(this, true);
+        $('#predictStatus').text('Status: Uploading and predicting...');
+        
+        $.ajax({
+            url: '/predict-csv',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: response => {
+                $('#predictStatus').html(`<span class="text-success">Prediction complete. ${response.length} predictions made.</span>`);
+                renderPredictionResults(response);
+            },
+            error: xhr => $('#predictStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON ? xhr.responseJSON.error : 'An unknown error occurred'}</span>`),
+            complete: () => showSpinner('#predictBtn', false)
+        });
+    });
+
+    function renderPredictionResults(data) {
+        mapMarkers.forEach(m => map.removeLayer(m));
+        mapMarkers = [];
+        
+        let tableHtml = '<table class="table table-sm table-striped table-hover"><thead><tr><th>ID</th><th>DateTime</th><th>Prediction</th></tr></thead><tbody>';
+        let validLocations = [];
+
+        data.forEach(row => {
+            tableHtml += `<tr><td>${row.scats_id}</td><td>${row.datetime}</td><td>${row.prediction}</td></tr>`;
+            if (row.lat && row.lng && row.lat != 0 && row.lng != 0) {
+                let marker = L.marker([row.lat, row.lng]).addTo(map);
+                marker.bindPopup(`<strong>ID: ${row.scats_id}</strong><br>Prediction: ${row.prediction}`);
+                mapMarkers.push(marker);
+                validLocations.push([row.lat, row.lng]);
+            }
+        });
+        tableHtml += '</tbody></table>';
+        $('#predictionDetails').html(tableHtml);
+
+        if (validLocations.length > 0) {
+            map.fitBounds(validLocations, { padding: [50, 50] });
+        } else {
+            $('#predictionDetails').append('<p class="text-center text-muted mt-3">No valid latitude/longitude data found to display on map.</p>');
+        }
+    }
+    
+    function showSpinner(button, show) {
+        const btn = $(button);
+        btn.find('.spinner-border').toggle(show);
+        btn.prop('disabled', show);
+    }
+});
+</script>
+</body>
+</html>
