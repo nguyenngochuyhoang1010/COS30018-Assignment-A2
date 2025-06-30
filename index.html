@@ -93,21 +93,36 @@
             <span>TFPS</span>
         </div>
         <ul class="nav nav-pills flex-column mt-2" id="sidebarTabs" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-data" role="tab">Data Processing</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-train" role="tab">Model Training</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-predict" role="tab">Prediction & Map</a></li>
+            <!-- NEW: Home tab -->
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-home" role="tab">Home</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-data" role="tab">1. Data Processing</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-train" role="tab">2. Model Training</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-predict" role="tab">3. Prediction & Map</a></li>
         </ul>
     </div>
 
     <!-- Main Content -->
     <div id="content">
         <div class="tab-content h-100">
+            <!-- NEW: Home Tab Content -->
+            <div class="tab-pane fade show active" id="tab-home" role="tabpanel">
+                <div class="container-fluid text-center">
+                    <div class="card p-5">
+                        <h1 class="display-4">Welcome to the Traffic Flow Prediction System</h1>
+                        <p class="lead mt-3">Leverage machine learning to predict traffic patterns from your data.</p>
+                        <hr class="my-4">
+                        <p>This system allows you to upload custom traffic data, train predictive models like LSTM and Stacked Autoencoders, and visualize the results on an interactive map.</p>
+                        <a class="btn btn-primary btn-lg mt-3" href="#" id="getStartedBtn" role="button">Get Started</a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Data Loading Tab -->
-            <div class="tab-pane fade show active" id="tab-data" role="tabpanel">
+            <div class="tab-pane fade" id="tab-data" role="tabpanel">
                 <h1 class="h2 mb-4">Data Loading & Preprocessing</h1>
                  <div class="card">
                     <div class="card-body p-4">
-                        <div class="row g-3">
+                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="dataFile" class="form-label">1. Upload Raw Data CSV</label>
                                 <input type="file" class="form-control" id="dataFile" accept=".csv">
@@ -236,6 +251,13 @@ $(document).ready(function() {
         }
     });
     let mapMarkers = [];
+    
+    // --- NEW: Get Started Button Logic ---
+    $('#getStartedBtn').on('click', function(e) {
+        e.preventDefault();
+        // Programmatically click the "Data Processing" tab in the sidebar
+        $('#sidebarTabs a[href="#tab-data"]').tab('show');
+    });
 
     $('#dataFile').on('change', function() {
         if ($(this).val()) {
