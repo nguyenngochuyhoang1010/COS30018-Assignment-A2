@@ -6,4 +6,4 @@ A model training system allowing users to train models and predict traffic volum
 How to run:
 - Go to terminal (on the software you run)
 - Type ./venv_tf/Scripts/activate (optional now)
-- Then type python main.py
+- Then type python server.py
