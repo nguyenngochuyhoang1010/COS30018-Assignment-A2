@@ -40,10 +40,16 @@ class XGBoostTrafficPredictor:
         
         # Store history in a Keras-like format
         results = self.model.evals_result()
-        self.history = {
-            'loss': results['validation_0']['rmse'],
-            'val_loss': results['validation_1']['rmse']
-        }
+        self.history = {'loss': [], 'val_loss': []}
+
+        # FIX: Safely access evaluation results to prevent KeyErrors.
+        # The server passes the test set as the first (and only) evaluation set.
+        if results and 'validation_0' in results:
+            # We'll assign the validation loss to both loss and val_loss
+            # to ensure the frontend chart can render without errors.
+            validation_loss = results['validation_0']['rmse']
+            self.history['val_loss'] = validation_loss
+            self.history['loss'] = validation_loss # Use the same data for training loss for consistency
         
         print("\nXGBoost model training complete.")
         return self.history

@@ -16,6 +16,8 @@
             --text-primary: #E5E7EB;
             --text-secondary: #D1D5DB;
             --accent-color: #818CF8;
+            --success-color: #34D399;
+            --info-color: #60A5FA;
         }
         html, body { 
             height: 100%; 
@@ -23,17 +25,15 @@
             font-family: 'Inter', sans-serif; 
         }
         body { 
-            background: #111827; /* Fallback */
+            background: #111827;
             background-image: linear-gradient(135deg, #1E3A8A 0%, #3730A3 50%, #4F46E5 100%);
             color: var(--text-primary); 
             overflow: hidden;
         }
-        #main-wrapper { 
-            height: 100vh; 
-        }
+        #main-wrapper { height: 100vh; }
         #sidebar {
             width: 280px;
-            background: rgba(17, 24, 39, 0.6); /* Semi-transparent dark */
+            background: rgba(17, 24, 39, 0.6);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -98,7 +98,7 @@
             color: var(--text-secondary);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        #map { height: 500px; width: 100%; border-radius: .5rem; border: 1px solid rgba(255, 255, 255, 0.1); }
+        #map, #route-map { height: 500px; width: 100%; border-radius: .5rem; border: 1px solid rgba(255, 255, 255, 0.1); }
         .spinner-border { display: none; }
         .form-label { font-weight: 500; color: var(--text-primary); }
         .form-control, .form-select {
@@ -162,7 +162,8 @@
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#tab-dashboard" role="tab">Dashboard</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-data" role="tab">1. Data Processing</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-train" role="tab">2. Model Training</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-predict" role="tab">3. Prediction & Map</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-predict" role="tab">3. Prediction Map</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#tab-routing" role="tab">4. Route Finding</a></li>
         </ul>
     </div>
 
@@ -273,6 +274,42 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="tab-pane fade" id="tab-routing" role="tabpanel">
+                <h1 class="h2 mb-4">Traffic-Aware Routing</h1>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body p-4">
+                                <h5>Find Fastest Route</h5>
+                                <div class="mb-3">
+                                    <label for="startNode" class="form-label">Start Location</label>
+                                    <select id="startNode" class="form-select"></select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="endNode" class="form-label">End Location</label>
+                                    <select id="endNode" class="form-select"></select>
+                                </div>
+                                <div class="d-grid">
+                                    <button class="btn btn-info text-white" id="findRouteBtn">
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Find Route
+                                    </button>
+                                </div>
+                                <div id="routeStatus" class="status-box mt-3">Status: Select start and end points.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <div id="route-map"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -301,335 +338,251 @@ $(document).ready(function() {
     let columnMapping = null;
     let lossChart = null;
     let hourlyTrafficChart = null;
+    let routePolyline = null;
 
-    let map = L.map('map').setView([-37.814, 144.963], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // --- Map Initialization ---
+    let predictionMap = L.map('map').setView([-37.814, 144.963], 12);
+    let routeMap = L.map('route-map').setView([-37.814, 144.963], 12);
+    
+    const tileLayerURL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const tileLayerOptions = {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }).addTo(map);
+    };
+
+    L.tileLayer(tileLayerURL, tileLayerOptions).addTo(predictionMap);
+    L.tileLayer(tileLayerURL, tileLayerOptions).addTo(routeMap);
     
-    $('a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
-        if (e.target.href.includes('predict')) {
-            map.invalidateSize();
-        }
-        if (e.target.href.includes('dashboard')) {
-            loadDashboardData();
-        }
-    });
     let mapMarkers = [];
+
+    // --- Tab & UI Logic ---
+    $('a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+        const targetTab = e.target.href;
+        if (targetTab.includes('predict')) predictionMap.invalidateSize();
+        if (targetTab.includes('routing')) routeMap.invalidateSize();
+        if (targetTab.includes('dashboard')) loadDashboardData();
+    });
     
-    $('#getStartedBtn').on('click', function(e) {
+    $('#getStartedBtn').on('click', e => {
         e.preventDefault();
         $('#sidebarTabs a[href="#tab-data"]').tab('show');
     });
 
+    // --- Dashboard ---
     function loadDashboardData() {
-        $.ajax({
-            url: '/api/dashboard-stats',
-            method: 'GET',
-            success: function(data) {
-                const dashboardHtml = `
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <div class="stat-card">
-                                <div class="stat-title">Total Records</div>
-                                <div class="stat-value">${data.totalRecords}</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stat-card">
-                                <div class="stat-title">Unique SCATS Sites</div>
-                                <div class="stat-value">${data.uniqueSites}</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stat-card">
-                                <div class="stat-title">Date Range</div>
-                                <div class="stat-value" style="font-size: 1.5rem;">${data.dateRange}</div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="card mt-4">
-                                <div class="card-header">Average Traffic Volume by Hour</div>
-                                <div class="card-body">
-                                    <canvas id="hourlyTrafficChart" style="max-height: 400px;"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                $('#dashboard-content').html(dashboardHtml);
-                renderHourlyTrafficChart(data.trafficByHour);
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : "Unknown error";
-                 $('#dashboard-content').html(`
-                    <div class="card p-5 text-center">
-                        <h1 class="display-5">Welcome!</h1>
-                        <p class="lead mt-3 text-warning">${errorMsg}</p>
-                    </div>`);
-            }
+        $.get('/api/dashboard-stats', function(data) {
+            const dashboardHtml = `
+                <div class="row g-4">
+                    <div class="col-md-4"><div class="stat-card"><div class="stat-title">Total Records</div><div class="stat-value">${data.totalRecords}</div></div></div>
+                    <div class="col-md-4"><div class="stat-card"><div class="stat-title">Unique SCATS Sites</div><div class="stat-value">${data.uniqueSites}</div></div></div>
+                    <div class="col-md-4"><div class="stat-card"><div class="stat-title">Date Range</div><div class="stat-value" style="font-size: 1.5rem;">${data.dateRange}</div></div></div>
+                    <div class="col-12"><div class="card mt-4"><div class="card-header">Average Traffic Volume by Hour</div><div class="card-body"><canvas id="hourlyTrafficChart" style="max-height: 400px;"></canvas></div></div></div>
+                </div>`;
+            $('#dashboard-content').html(dashboardHtml);
+            renderHourlyTrafficChart(data.trafficByHour);
+        }).fail(xhr => {
+            const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : "Unknown error";
+            $('#dashboard-content').html(`<div class="card p-5 text-center"><h1 class="display-5">Welcome!</h1><p class="lead mt-3 text-warning">${errorMsg}</p></div>`);
         });
     }
 
     function renderHourlyTrafficChart(trafficData) {
-        const ctx = document.getElementById('hourlyTrafficChart').getContext('2d');
-        if (hourlyTrafficChart) {
-            hourlyTrafficChart.destroy();
-        }
-        hourlyTrafficChart = new Chart(ctx, {
+        const ctx = $('#hourlyTrafficChart');
+        if (!ctx.length) return;
+        if (hourlyTrafficChart) hourlyTrafficChart.destroy();
+        hourlyTrafficChart = new Chart(ctx[0].getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: Object.keys(trafficData),
-                datasets: [{
-                    label: 'Average Traffic Volume',
-                    data: Object.values(trafficData),
-                    backgroundColor: 'rgba(129, 140, 248, 0.5)',
-                    borderColor: 'rgba(129, 140, 248, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { 
-                        beginAtZero: true,
-                        ticks: { color: 'white' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    },
-                    x: {
-                        ticks: { color: 'white' },
-                        grid: { display: false }
-                    }
-                }
-            }
+            data: { labels: Object.keys(trafficData), datasets: [{ label: 'Average Traffic Volume', data: Object.values(trafficData), backgroundColor: 'rgba(129, 140, 248, 0.5)', borderColor: 'rgba(129, 140, 248, 1)', borderWidth: 1 }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: 'white' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }, x: { ticks: { color: 'white' }, grid: { display: false } } } }
         });
     }
-
-    $('#dataFile').on('change', function() {
-        if ($(this).val()) {
+    
+    // --- Data Processing ---
+    $('#dataFile').on('change', () => {
+        if ($('#dataFile').val()) {
             $('#mapColumnsBtn').prop('disabled', false);
-            $('#dataStatus').text('Status: File selected. Please specify header row and map columns.');
+            $('#dataStatus').text('Status: File selected. Ready to map columns.');
         }
     });
 
     $('#mapColumnsBtn').on('click', function() {
         let fileInput = $('#dataFile')[0];
-        if (!fileInput.files.length) return alert('Please select a file first.');
-        
+        if (!fileInput.files.length) return;
         let formData = new FormData();
         formData.append('file', fileInput.files[0]);
         formData.append('header_row', $('#headerRow').val());
-        
         showSpinner(this, true);
-        
         $.ajax({
-            url: '/get-headers',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: response => {
-                populateMappingModal(response.headers);
-                const mappingModal = new bootstrap.Modal(document.getElementById('mappingModal'));
-                mappingModal.show();
+            url: '/get-headers', method: 'POST', data: formData, processData: false, contentType: false,
+            success: r => {
+                populateMappingModal(r.headers);
+                new bootstrap.Modal($('#mappingModal')).show();
             },
-            error: xhr => alert('Error getting headers: ' + (xhr.responseJSON ? xhr.responseJSON.error : "Unknown error")),
+            error: xhr => alert('Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : "Unknown")),
             complete: () => showSpinner('#mapColumnsBtn', false)
         });
     });
 
     function populateMappingModal(headers) {
-        const requiredCols = {
-            'scats_number': 'SCATS Site ID / Junction',
-            'location': 'Location Name (Optional)',
-            'latitude': 'Latitude (Optional)',
-            'longitude': 'Longitude (Optional)',
-            'date': 'Date or DateTime',
-            'volume_columns': 'Traffic Volume Columns'
-        };
-        
-        let html = '<p>Please map your CSV columns to the required data fields.</p>';
-        Object.entries(requiredCols).forEach(([key, desc]) => {
-            if (key !== 'volume_columns') {
-                html += `<div class="row mb-2 align-items-center"><div class="col-sm-4"><label class="form-label fw-bold">${desc}:</label></div><div class="col-sm-8"><select class="form-select" id="map-${key}">`;
-                html += `<option value="">-- Not Applicable --</option>`; // Add a null option
-                headers.forEach(h => {
-                    const saneKey = key.replace("_", " ").toLowerCase();
-                    const saneHeader = h.toLowerCase().trim();
-                    const isSelected = saneKey === saneHeader || (saneKey.includes('junction') && saneHeader.includes('junction')) || (saneKey.includes('date') && saneHeader.includes('date'));
-                    html += `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}</option>`;
-                });
-                html += '</select></div></div>';
-            }
+        const fields = {'scats_number':'SCATS Site ID','location':'Location Name (Opt)','latitude':'Latitude (Opt)','longitude':'Longitude (Opt)','date':'Date/DateTime','volume_columns':'Traffic Volume Columns'};
+        let html = '';
+        Object.entries(fields).forEach(([key, desc]) => {
+            const isMulti = key === 'volume_columns';
+            html += `<div class="mb-2"><label class="form-label fw-bold">${desc}</label><select class="form-select" id="map-${key}" ${isMulti ? 'multiple size="8"' : ''}>`;
+            if (!isMulti) html += `<option value="">-- N/A --</option>`;
+            headers.forEach(h => {
+                const saneKey = key.replace("_", " ").toLowerCase();
+                const saneHeader = h.toLowerCase().trim();
+                const isSelected = isMulti ? (saneHeader.startsWith('v') || saneHeader.includes('vol')) : (saneKey.split(' ')[0] === saneHeader.split(' ')[0]);
+                html += `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}</option>`;
+            });
+            html += '</select></div>';
         });
-        
-        html += '<hr><div class="mb-2"><label class="form-label fw-bold">Traffic Volume Columns (select one or more):</label><select class="form-select" id="map-volume_columns" multiple size="8">';
-        headers.forEach(h => {
-             const isSelected = h.toLowerCase().trim().startsWith('v') || h.toLowerCase().includes('vehicle');
-             html += `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}</option>`;
-        });
-        html += '</select></div>';
         $('#mappingModalBody').html(html);
     }
-    
+
     $('#confirmMappingBtn').on('click', function() {
         columnMapping = {};
         $('#mappingModalBody select').each(function() {
             let id = $(this).attr('id').replace('map-', '');
-            let val = $(this).val();
-            if (val) columnMapping[id] = val;
+            if ($(this).val()) columnMapping[id] = $(this).val();
         });
-
-        if (!columnMapping.volume_columns || columnMapping.volume_columns.length === 0) {
-            return alert('You must select at least one Traffic Volume column.');
-        }
-
+        if (!columnMapping.volume_columns || columnMapping.volume_columns.length === 0) return alert('Must select at least one Volume column.');
         $('#processBtn').prop('disabled', false);
-        $('#dataStatus').text('Status: Columns mapped. Ready to load & process data.');
+        $('#dataStatus').text('Status: Columns mapped. Ready to process.');
         bootstrap.Modal.getInstance($('#mappingModal')).hide();
     });
 
     $('#processBtn').on('click', function() {
-        if (!$('#dataFile')[0].files.length || !columnMapping) return alert('Please select a file and map columns.');
-
+        if (!$('#dataFile')[0].files.length || !columnMapping) return;
         let formData = new FormData();
         formData.append('file', $('#dataFile')[0].files[0]);
         formData.append('header_row', $('#headerRow').val());
         formData.append('column_mapping', JSON.stringify(columnMapping));
-        
         showSpinner(this, true);
-        $('#dataStatus').text('Status: Uploading and preprocessing... This may take a moment.');
-
+        $('#dataStatus').text('Status: Preprocessing... This may take a moment.');
         $.ajax({
-            url: '/preprocess',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: response => {
-                $('#dataStatus').html(`<span class="text-success">Preprocessing completed! ${response.rows_processed} rows processed. You can now train a model.</span>`);
-                loadDashboardData(); // Refresh dashboard after processing
+            url: '/preprocess', method: 'POST', data: formData, processData: false, contentType: false,
+            success: r => {
+                $('#dataStatus').html(`<span class="text-success">Success! ${r.rows_processed} rows processed.</span>`);
+                loadDashboardData();
+                populateScatsDropdowns();
             },
-            error: xhr => $('#dataStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON ? xhr.responseJSON.error : 'An unknown error occurred'}</span>`),
+            error: xhr => $('#dataStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON.error}</span>`),
             complete: () => showSpinner('#processBtn', false)
         });
     });
 
+    // --- Model Training ---
     $('#trainBtn').on('click', function() {
         showSpinner(this, true);
         $('#trainStatus').text(`Status: Training ${$('#modelSelect').val().toUpperCase()} model...`);
-
         $.ajax({
-            url: '/train',
-            method: 'POST',
-            contentType: 'application/json',
+            url: '/train', method: 'POST', contentType: 'application/json',
             data: JSON.stringify({ model: $('#modelSelect').val(), epochs: $('#epochs').val() }),
-            success: response => {
-                $('#trainStatus').html(`<span class="text-success">${response.message}</span>`);
-                renderLossChart(response.history);
+            success: r => {
+                $('#trainStatus').html(`<span class="text-success">${r.message}</span>`);
+                renderLossChart(r.history);
             },
-            error: xhr => $('#trainStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON ? xhr.responseJSON.error : 'An unknown error occurred'}</span>`),
+            error: xhr => $('#trainStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON.error}</span>`),
             complete: () => showSpinner('#trainBtn', false)
         });
     });
 
     function renderLossChart(history) {
-        const ctx = document.getElementById('lossChart').getContext('2d');
-        if(lossChart) {
-            lossChart.destroy();
-        }
-        lossChart = new Chart(ctx, {
+        const ctx = $('#lossChart');
+        if (!ctx.length || !history) return;
+        if(lossChart) lossChart.destroy();
+        lossChart = new Chart(ctx[0].getContext('2d'), {
             type: 'line',
             data: {
                 labels: Array.from({length: history.loss.length}, (_, i) => i + 1),
-                datasets: [{
-                    label: 'Training Loss',
-                    data: history.loss,
-                    borderColor: 'rgba(129, 140, 248, 1)',
-                    backgroundColor: 'rgba(129, 140, 248, 0.2)',
-                    fill: true,
-                }, {
-                    label: 'Validation Loss',
-                    data: history.val_loss || history.validation_loss, // Accommodate different history keys
-                    borderColor: 'rgba(251, 146, 60, 1)',
-                     backgroundColor: 'rgba(251, 146, 60, 0.2)',
-                    fill: true,
-                }]
+                datasets: [
+                    { label: 'Training Loss', data: history.loss, borderColor: 'rgba(129, 140, 248, 1)', backgroundColor: 'rgba(129, 140, 248, 0.2)', fill: true },
+                    { label: 'Validation Loss', data: history.val_loss || (history.eval_set ? history.eval_set[1] : []), borderColor: 'rgba(251, 146, 60, 1)', backgroundColor: 'rgba(251, 146, 60, 0.2)', fill: true }
+                ]
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { labels: { color: 'white' } } },
-                scales: {
-                    y: { 
-                        ticks: { color: 'white' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    },
-                    x: {
-                        title: { display: true, text: 'Epoch', color: 'white' },
-                        ticks: { color: 'white' },
-                        grid: { display: false }
-                    }
-                }
-            }
+            options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } }, scales: { y: { ticks: { color: 'white' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }, x: { title: { display: true, text: 'Epoch', color: 'white' }, ticks: { color: 'white' }, grid: { display: false } } } }
         });
     }
 
+    // --- Prediction ---
     $('#predictBtn').on('click', function() {
         let fileInput = $('#predictFile')[0];
-        if (!fileInput.files.length) return alert('Please select a file for prediction.');
-
+        if (!fileInput.files.length) return;
         let formData = new FormData();
         formData.append('file', fileInput.files[0]);
-
         showSpinner(this, true);
-        $('#predictStatus').text('Status: Uploading and predicting...');
-        
+        $('#predictStatus').text('Status: Predicting...');
         $.ajax({
-            url: '/predict-csv',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: response => {
-                $('#predictStatus').html(`<span class="text-success">Prediction complete. ${response.length} predictions made.</span>`);
-                renderPredictionResults(response);
+            url: '/predict-csv', method: 'POST', data: formData, processData: false, contentType: false,
+            success: r => {
+                $('#predictStatus').html(`<span class="text-success">Prediction complete. ${r.length} results.</span>`);
+                renderPredictionResults(r);
             },
-            error: xhr => $('#predictStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON ? xhr.responseJSON.error : 'An unknown error occurred'}</span>`),
+            error: xhr => $('#predictStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON.error}</span>`),
             complete: () => showSpinner('#predictBtn', false)
         });
     });
 
     function renderPredictionResults(data) {
-        mapMarkers.forEach(m => map.removeLayer(m));
+        mapMarkers.forEach(m => predictionMap.removeLayer(m));
         mapMarkers = [];
-        
         let tableHtml = '<table class="table table-sm table-dark table-striped table-hover"><thead><tr><th>ID</th><th>DateTime</th><th>Prediction</th></tr></thead><tbody>';
         let validLocations = [];
-
         data.forEach(row => {
             tableHtml += `<tr><td>${row.scats_id}</td><td>${row.datetime}</td><td>${row.prediction}</td></tr>`;
             if (row.lat && row.lng && row.lat != 0 && row.lng != 0) {
-                let marker = L.marker([row.lat, row.lng]).addTo(map);
-                marker.bindPopup(`<strong>ID: ${row.scats_id}</strong><br>Prediction: ${row.prediction}`);
+                let marker = L.marker([row.lat, row.lng]).addTo(predictionMap).bindPopup(`<strong>ID: ${row.scats_id}</strong><br>Prediction: ${row.prediction}`);
                 mapMarkers.push(marker);
                 validLocations.push([row.lat, row.lng]);
             }
         });
-        tableHtml += '</tbody></table>';
-        $('#predictionDetails').html(tableHtml);
-
-        if (validLocations.length > 0) {
-            map.fitBounds(validLocations, { padding: [50, 50] });
-        } else {
-            $('#predictionDetails').append('<p class="text-center text-muted mt-3">No valid latitude/longitude data found to display on map.</p>');
-        }
+        $('#predictionDetails').html(tableHtml + '</tbody></table>');
+        if (validLocations.length > 0) predictionMap.fitBounds(validLocations, { padding: [50, 50] });
     }
+
+    // --- Routing ---
+    function populateScatsDropdowns() {
+        $.get('/api/scats-locations', function(locations) {
+            const startNode = $('#startNode');
+            const endNode = $('#endNode');
+            startNode.empty().append('<option selected disabled>Choose a starting point...</option>');
+            endNode.empty().append('<option selected disabled>Choose a destination...</option>');
+            locations.forEach(loc => {
+                const option = `<option value="${loc.id}">${loc.id} - ${loc.name}</option>`;
+                startNode.append(option);
+                endNode.append(option);
+            });
+        });
+    }
+
+    $('#findRouteBtn').on('click', function() {
+        const startNode = $('#startNode').val();
+        const endNode = $('#endNode').val();
+        if (!startNode || !endNode) return alert('Please select both a start and end location.');
+        
+        showSpinner(this, true);
+        $('#routeStatus').text('Status: Finding fastest route...');
+
+        $.ajax({
+            url: '/api/find-route',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ start_node: startNode, end_node: endNode }),
+            success: r => {
+                $('#routeStatus').html(`<span class="text-success">Route found! Path displayed on map.</span>`);
+                if (routePolyline) routeMap.removeLayer(routePolyline);
+                routePolyline = L.polyline(r.path, { color: '#60A5FA', weight: 5 }).addTo(routeMap);
+                routeMap.fitBounds(routePolyline.getBounds(), { padding: [20, 20] });
+            },
+            error: xhr => $('#routeStatus').html(`<span class="text-danger">Error: ${xhr.responseJSON.error}</span>`),
+            complete: () => showSpinner('#findRouteBtn', false)
+        });
+    });
     
     function showSpinner(button, show) {
-        const btn = $(button);
-        btn.find('.spinner-border').toggle(show);
-        btn.prop('disabled', show);
+        $(button).find('.spinner-border').toggle(show);
+        $(button).prop('disabled', show);
     }
 });
 </script>
