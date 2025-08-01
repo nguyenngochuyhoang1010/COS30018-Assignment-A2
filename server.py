@@ -10,6 +10,9 @@ import uuid # Used for creating unique temporary filenames
 from utils.dataloader import TrafficDataLoader
 from model.saemodel import StackedAutoencoder
 from model.lstm_model import LSTMTrafficPredictor
+from model.gru_model import GRUTrafficPredictor
+from model.xgboost_model import XGBoostTrafficPredictor
+
 
 # --- Configuration ---
 UPLOAD_FOLDER = 'uploads'
@@ -46,7 +49,6 @@ def get_headers():
     Safely reads the header row of an uploaded CSV.
     This function is wrapped in a try-except block to guarantee a JSON response.
     """
-    # --- FIX: The entire function logic is now wrapped in a try-except block ---
     try:
         if 'file' not in request.files:
             return jsonify({"error": "No file part in the request."}), 400
@@ -64,20 +66,46 @@ def get_headers():
             file.save(temp_filepath)
             header_row = int(request.form.get('header_row', 0))
             
-            # Read headers from the saved file. This is where errors often occur.
             headers = pd.read_csv(temp_filepath, header=header_row, nrows=0).columns.str.strip().tolist()
             
             return jsonify({"headers": headers})
             
         finally:
-            # Ensure the temporary file is always cleaned up
             if os.path.exists(temp_filepath):
                 os.remove(temp_filepath)
 
     except Exception as e:
-        # This will catch any error, including file parsing errors, and return a specific message.
-        traceback.print_exc() # This will print the full error to your Flask console for debugging.
+        traceback.print_exc() 
         return jsonify({"error": f"A server error occurred: {str(e)}"}), 500
+
+@app.route('/api/dashboard-stats', methods=['GET'])
+def get_dashboard_stats():
+    """Provides summary statistics for the dashboard once data is loaded."""
+    global data_loader
+    if data_loader is None or data_loader.df_final is None:
+        return jsonify({"error": "Data not processed yet. Please process data in Tab 2."}), 400
+
+    try:
+        df = data_loader.df_final
+        total_records = len(df)
+        unique_sites = df['scats_number'].nunique()
+        start_date = df['Date_Time'].min().strftime('%Y-%m-%d')
+        end_date = df['Date_Time'].max().strftime('%Y-%m-%d')
+        
+        # Aggregate traffic by hour for a chart
+        traffic_by_hour = df.groupby(df['Date_Time'].dt.hour)['Traffic_Volume'].mean().round(2).to_dict()
+
+        stats = {
+            "totalRecords": f"{total_records:,}",
+            "uniqueSites": unique_sites,
+            "dateRange": f"{start_date} to {end_date}",
+            "trafficByHour": traffic_by_hour
+        }
+        return jsonify(stats)
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"An error occurred while generating stats: {str(e)}"}), 500
 
 
 @app.route('/preprocess', methods=['POST'])
@@ -144,7 +172,7 @@ def train_model_endpoint():
         epochs = int(data.get('epochs', 50))
         
         X_scaled, y, _ = data_loader.prepare_for_model()
-        X_train, _, y_train, _ = data_loader.chronological_train_test_split(X_scaled, y)
+        X_train, X_test, y_train, y_test = data_loader.chronological_train_test_split(X_scaled, y)
         
         X_train_data = X_train.values
         y_train_data = y_train.values
@@ -152,16 +180,30 @@ def train_model_endpoint():
         if model_name == 'lstm':
             model_instance = LSTMTrafficPredictor(input_dim=X_train_data.shape[1])
             X_train_reshaped = X_train_data.reshape(X_train_data.shape[0], 1, X_train_data.shape[1])
-            model_instance.train(X_train_reshaped, y_train_data, epochs=epochs)
+            model_instance.train(X_train_reshaped, y_train_data, epochs=epochs, validation_data=(X_test.values.reshape(X_test.shape[0], 1, X_test.shape[1]), y_test.values))
         elif model_name == 'sae':
             model_instance = StackedAutoencoder(input_dim=X_train_data.shape[1], encoding_dims=[128, 64, 32])
-            model_instance.train_full_model(X_train_data, y_train_data, epochs=epochs)
+            model_instance.pretrain_autoencoders(X_train_data, epochs=int(epochs/2)) # Pre-train for half the epochs
+            model_instance.train_full_model(X_train_data, y_train_data, epochs=epochs, validation_data=(X_test.values, y_test.values))
+        elif model_name == 'gru':
+            model_instance = GRUTrafficPredictor(input_dim=X_train_data.shape[1])
+            X_train_reshaped = X_train_data.reshape(X_train_data.shape[0], 1, X_train_data.shape[1])
+            model_instance.train(X_train_reshaped, y_train_data, epochs=epochs, validation_data=(X_test.values.reshape(X_test.shape[0], 1, X_test.shape[1]), y_test.values))
+        elif model_name == 'xgboost':
+            model_instance = XGBoostTrafficPredictor()
+            model_instance.train(X_train_data, y_train_data, eval_set=[(X_test.values, y_test.values)])
         else:
             return jsonify({"error": "Invalid model type specified"}), 400
             
         active_model = model_instance
         
-        return jsonify({"message": f"{model_name.upper()} model trained successfully."})
+        # Return training history for plotting
+        history = active_model.history.history if hasattr(active_model.history, 'history') else active_model.history
+        
+        return jsonify({
+            "message": f"{model_name.upper()} model trained successfully.",
+            "history": history
+        })
         
     except Exception as e:
         traceback.print_exc()
@@ -192,25 +234,25 @@ def predict_batch():
             pred_df.rename(columns={data_loader.mapping['volume_columns'][0]: 'Traffic_Volume'}, inplace=True)
         
         pred_df['Date_Time'] = pd.to_datetime(pred_df['date'], errors='coerce')
-        pred_df['hour'] = pred_df['Date_Time'].dt.hour
-        pred_df['minute'] = pred_df['Date_Time'].dt.minute
-        # Simplified feature engineering for prediction. A robust solution would replicate
-        # the full feature engineering from the dataloader.
-        for col in X_train_columns:
-            if col not in pred_df.columns:
-                pred_df[col] = 0
         
-        pred_features = pred_df[X_train_columns]
+        # Replicate feature engineering
+        df_features = data_loader.engineer_features(pred_df, is_prediction=True)
+
+        for col in X_train_columns:
+            if col not in df_features.columns:
+                df_features[col] = 0
+        
+        pred_features = df_features[X_train_columns]
         pred_features_scaled = scaler.transform(pred_features)
         
         input_for_model = pred_features_scaled
-        if isinstance(active_model, LSTMTrafficPredictor):
+        if isinstance(active_model, (LSTMTrafficPredictor, GRUTrafficPredictor)):
             input_for_model = pred_features_scaled.reshape(pred_features_scaled.shape[0], 1, pred_features_scaled.shape[1])
             
         predictions = active_model.predict(input_for_model).flatten()
         
         results = []
-        for index, row in pred_df.iterrows():
+        for index, row in df_features.iterrows():
             results.append({
                 "scats_id": row.get('scats_number', 'N/A'),
                 "datetime": str(row.get('Date_Time', 'N/A')),
