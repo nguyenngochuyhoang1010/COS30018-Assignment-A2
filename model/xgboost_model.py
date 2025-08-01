@@ -6,9 +6,6 @@ class XGBoostTrafficPredictor:
     Implements an XGBoost model for traffic flow prediction using a Scikit-Learn-like API.
     """
     def __init__(self, n_estimators=1000, learning_rate=0.05, max_depth=5, subsample=0.8, colsample_bytree=0.8, random_state=42):
-        """
-        Initializes the XGBoost model.
-        """
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_depth = max_depth
@@ -16,9 +13,7 @@ class XGBoostTrafficPredictor:
         self.colsample_bytree = colsample_bytree
         self.random_state = random_state
         self.model = self._build_model()
-        # Create a dummy history object to mimic Keras API
-        self.history = type('obj', (object,), {'history': {'loss': [0], 'val_loss': [0]}})()
-
+        self.history = {}
 
     def _build_model(self):
         """Builds the XGBoost regressor model."""
@@ -31,26 +26,30 @@ class XGBoostTrafficPredictor:
             subsample=self.subsample,
             colsample_bytree=self.colsample_bytree,
             random_state=self.random_state,
-            n_jobs=-1  # Use all available CPU cores
+            n_jobs=-1,
+            early_stopping_rounds=10 # Add early stopping
         )
         return model
 
-    def train(self, X_train, y_train, epochs=None, batch_size=None, validation_split=None):
+    def train(self, X_train, y_train, eval_set=None, **kwargs):
         """
-        Trains the XGBoost model. The epochs and batch_size arguments are ignored
-        to maintain a consistent API with Keras models but are not used by XGBoost.
+        Trains the XGBoost model.
         """
         print("\nTraining the XGBoost Regressor model...")
-        self.model.fit(X_train, y_train, verbose=False)
+        self.model.fit(X_train, y_train, eval_set=eval_set, verbose=False)
+        
+        # Store history in a Keras-like format
+        results = self.model.evals_result()
+        self.history = {
+            'loss': results['validation_0']['rmse'],
+            'val_loss': results['validation_1']['rmse']
+        }
+        
         print("\nXGBoost model training complete.")
-        # Since XGBoost doesn't have epochs, we can't generate a real loss history.
-        # We return a dummy object for API consistency with the frontend.
         return self.history
-
 
     def predict(self, X_test):
         """Makes predictions using the trained XGBoost model."""
-        # XGBoost predict does not require reshaping
         return self.model.predict(X_test)
 
     def save_model(self, filepath):
