@@ -212,6 +212,12 @@ def preprocess_data():
 
         data_loader = TrafficDataLoader(filepath, column_mapping, header_row)
         data_loader.load_and_initial_clean()
+        
+        # FIX: Ensure scats_number is an integer to match the graph keys
+        if 'scats_number' in data_loader.df_raw.columns:
+            data_loader.df_raw['scats_number'] = pd.to_numeric(data_loader.df_raw['scats_number'], errors='coerce').astype('Int64')
+            data_loader.df_raw.dropna(subset=['scats_number'], inplace=True)
+
         data_loader.process_data()
         X_scaled, y, fitted_scaler = data_loader.prepare_for_model()
         
